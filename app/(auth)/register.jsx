@@ -1,15 +1,15 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View,Platform,ScrollView ,KeyboardAvoidingView,Alert} from 'react-native';
 import React, { useState } from 'react';
 import { TextInput } from 'react-native';
 import colors from '../config/colors';
 // import authService from "@/lib/appwrite/auth";
-import authService from "../../lib/appwrite/auth";
 import { useRouter } from "expo-router";
-
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "../../context/authContext";
 
 const Register = () => {
     const router = useRouter();
-
+    const { register } = useAuth();
   const [loading, setLoading] = useState(false);
   
 
@@ -23,39 +23,21 @@ const Register = () => {
   
 
   const onHandleSignup = async () => {
-      const { name, email, password, confirmPassword } = rform;
-  
-      // 🛑 basic validation
-      if (!name || !email || !password || !confirmPassword) {
-        Alert.alert("Error", "All fields are required");
-        return;
-      }
-  
-      if (password !== confirmPassword) {
-        Alert.alert("Error", "Passwords do not match");
-        return;
-      }
-  
-      try {
-        setLoading(true);
-  
-        await authService.createAccount({
-          name,
-          email,
-          password,
-          phone: rform.phone  
-        });
-  
-        // router.replace("/(tabs)/profile");
-      } catch (error) {
-        Alert.alert("Signup failed", error.message || "Something went wrong");
-      } finally {
-        setLoading(false);
-      }
+    try {
+      await register(rform);
+      router.replace("/(tabs)/home");
+    } catch (error) {
+      Alert.alert("Signup failed", error.message);
+    }
     };
 
   return (
-    <View style={styles.container}>
+   <SafeAreaView style={{ flex: 1 }}>
+  <KeyboardAvoidingView
+    style={{ flex: 1 }}
+    behavior={Platform.OS === "ios" ? "padding" : "height"}
+  >
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.header}>
         Welcome to Jaly Tournaments
       </Text>
@@ -126,7 +108,9 @@ const Register = () => {
       >
         Already have an account? Login
       </Text>
-    </View>
+    </ScrollView>
+  </KeyboardAvoidingView>
+</SafeAreaView>
   );
 };
 
@@ -136,7 +120,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'rgba(161, 118, 216, 0.57)',
-    paddingTop: 50,
+    // paddingTop: 10,
     paddingHorizontal: 12,
     justifyContent: 'center',
     alignItems: 'center'

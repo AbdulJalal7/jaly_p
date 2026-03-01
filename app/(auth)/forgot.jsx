@@ -2,6 +2,8 @@
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 
 export default function Forget() {
   const router = useRouter();
@@ -13,7 +15,7 @@ export default function Forget() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Reset Password</Text>
 
       <TextInput
@@ -30,7 +32,7 @@ export default function Forget() {
       <TouchableOpacity onPress={() => router.back()}>
         <Text style={styles.link}>Back to Login</Text>
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
 

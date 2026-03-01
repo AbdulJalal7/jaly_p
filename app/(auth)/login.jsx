@@ -1,29 +1,38 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View,KeyboardAvoidingView,Platform,Alert } from 'react-native';
 import { useState } from 'react';
 import { TextInput } from 'react-native';
 import { useRouter } from "expo-router";
 import colors from '../config/colors';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { useAuth } from "../../context/authContext";
+
+
 
 const Login = () => {
+    const { login } = useAuth();
       const router = useRouter();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const onHandleLogin = () => {
-    // if (email !== '' && password !== '') {
-    //   signInWithEmailAndPassword(auth, email, password)
-    //     .then(() => console.log('Login success'))
-    //     .catch((err) => console.log(`Login err: ${err}`));
-    // }
+  const onHandleLogin = async () => {
+     try {
+      await login(email, password);
+      router.replace("/(tabs)/home");
+    } catch (error) {
+      Alert.alert("Login failed", error.message);
+    }
   };
 
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Great to see you back!</Text>
-      <Text style={styles.subheader}>
-        Please provide your credentials to access your chats.
-      </Text>
+    <SafeAreaView style={{ flex: 1 }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 ,...styles.container}}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+      <Text style={styles.header}>Welcome to Jaly Tournaments</Text>
       <Text style={styles.label}>Email</Text>
       <TextInput
         style={styles.input}
@@ -56,7 +65,8 @@ const Login = () => {
       >
         Don't have an account? Register
       </Text>
-    </View>
+    </KeyboardAvoidingView>
+  </SafeAreaView>
   );
 };
 
