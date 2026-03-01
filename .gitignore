@@ -3,6 +3,9 @@
 # dependencies
 node_modules/
 
+#appwrite
+.env
+
 # Expo
 .expo/
 dist/
