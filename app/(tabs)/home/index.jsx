@@ -72,10 +72,16 @@ export default function Home() {
     </View>
 
     {/* Footer Row */}
-    {console.log("FFFFFFFF : " ,item.enteryFee)}
+    {/* {console.log("FFFFFFFF : " ,item.enteryFee)} */}
     <View style={styles.entryBadge}>
         <Text >Starting Time : {new Date(item.$createdAt).toLocaleString().slice(0, 15)}</Text>
+        <Text >Total Player : {item.maxPlayers}</Text>
+
       </View>
+{/* 
+    <View style={styles.totalplayerBadge}>
+        <Text >Total Player : {item.maxPlayers}</Text>
+      </View> */}
     <View style={styles.footerRow}>
         
       <View style={styles.entryBadge}>
@@ -196,6 +202,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     paddingHorizontal: 14,
     paddingVertical: 8,
+    borderRadius: 14,
+  },
+
+  totalplayerBadge: {
+    backgroundColor: "#fff",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 14,
   },
 

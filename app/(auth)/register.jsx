@@ -27,6 +27,7 @@ const Register = () => {
       await register(rform);
       router.replace("/(tabs)/home");
     } catch (error) {
+      console.error("Signup error:", error);
       Alert.alert("Signup failed", error.message);
     }
     };
