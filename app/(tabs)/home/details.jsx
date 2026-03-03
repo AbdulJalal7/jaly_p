@@ -11,9 +11,13 @@ import { useEffect, useState } from "react";
 import { useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import tournamentService from "../../../lib/appwrite/database";
+import { useRouter } from "expo-router";
+
 
 export default function TournamentDetails() {
   const { id } = useLocalSearchParams();
+  const router = useRouter();
+
 
   const [tournament, setTournament] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -35,7 +39,13 @@ export default function TournamentDetails() {
   };
 
   const handleJoinPress = () => {
-    Alert.alert("Join", "Proceed to payment & registration flow");
+   
+      router.push({
+        pathname: "/(tabs)/home/join",
+        params: { id: tournament.$id },
+      })
+    
+    // Alert.alert("Join", "Proceed to payment & registration flow");
   };
 
   if (loading) {

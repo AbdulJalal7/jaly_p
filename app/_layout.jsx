@@ -2,6 +2,7 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "../context/authContext";
+import { View, ActivityIndicator } from "react-native";
 
 function RootNavigation() {
   const { user, loading } = useAuth();
@@ -13,18 +14,33 @@ function RootNavigation() {
 
     const inAuthGroup = segments[0] === "(auth)";
 
-    // Not logged in → force login
+    // 🚫 Not logged in → redirect to login
     if (!user && !inAuthGroup) {
       router.replace("/(auth)/login");
+      return;
     }
 
-    // Logged in → prevent auth screens
+    // 🔒 Logged in → block auth screens
     if (user && inAuthGroup) {
       router.replace("/(tabs)/home");
+      return;
     }
-  }, [user, loading]);
+  }, [user, loading, segments]);
 
-  if (loading) return null;
+  // 🔄 Show loader while checking session
+  if (loading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
 
   return <Stack screenOptions={{ headerShown: false }} />;
 }

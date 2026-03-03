@@ -14,11 +14,12 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import participantService from "../../../lib/appwrite/participants";
+import { useAuth } from "../../../context/authContext";
 
 export default function JoinTournament() {
   const { id } = useLocalSearchParams(); // tournament id
   const router = useRouter();
-
+    const { user } = useAuth();
   const [gameId, setGameId] = useState("");
   const [transactionId, setTransactionId] = useState("");
   const [receipt, setReceipt] = useState(null);
@@ -52,6 +53,7 @@ export default function JoinTournament() {
 
       await participantService.joinTournament({
         tournamentId: id,
+        userId: user.$id,  
         gameId,
         transactionId,
         receiptFile: receipt,
