@@ -26,21 +26,50 @@ export default function JoinTournament() {
   const [loading, setLoading] = useState(false);
 
   const pickImage = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert("Permission Required", "Allow gallery access");
+  try {
+    console.log("User ... ", user);
+    // 1️⃣ Request permission
+    const { status } =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission Required",
+        "Please allow gallery access to upload receipt."
+      );
       return;
     }
 
+    // 2️⃣ Open image picker
     const result = await ImagePicker.launchImageLibraryAsync({
+      // mediaTypes: ImagePicker.MediaType.Images, // ✅ Updated API
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1], // optional (square crop)
       quality: 0.7,
     });
 
-    if (!result.canceled) {
-      setReceipt(result.assets[0]);
+    // 3️⃣ Handle cancel
+    if (result.canceled) return;
+
+    // 4️⃣ Get selected image
+    const selectedImage = result.assets[0];
+    console.log("Selected image:", selectedImage);
+
+    // Optional: basic validation
+    if (!selectedImage?.uri) {
+      Alert.alert("Error", "Failed to select image.");
+      return;
     }
-  };
+
+    // 5️⃣ Save to state
+    setReceipt(selectedImage);
+
+  } catch (error) {
+    console.log("Image Picker Error:", error);
+    Alert.alert("Error", "Something went wrong while picking image.");
+  }
+};
 
   const handleSubmit = async () => {
     if (!gameId || !transactionId || !receipt) {
@@ -58,20 +87,20 @@ export default function JoinTournament() {
         transactionId,
         receiptFile: receipt,
       });
-
-      Alert.alert(
-        "Submitted",
-        "Your payment is under verification.",
-        [
-          {
-            text: "OK",
-            onPress: () => router.back(),
-          },
-        ]
-      );
+      console.log("Joined tournament successfully");
+      // Alert.alert(
+      //   "Submitted",
+      //   "Your payment is under verification.",
+      //   [
+      //     {
+      //       text: "OK",
+      //       onPress: () => router.back(),
+      //     },
+      //   ]
+      // );
     } catch (error) {
-      console.log(error);
-      Alert.alert("Error", "Failed to submit participation");
+      console.log("PPPPPPPPPP : ",error);
+      // Alert.alert("Error", "Failed to submit participation");
     } finally {
       setLoading(false);
     }
