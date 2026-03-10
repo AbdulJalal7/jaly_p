@@ -27,7 +27,7 @@ export default function JoinTournament() {
 
   const pickImage = async () => {
   try {
-    console.log("User ... ", user);
+    // console.log("User ... ", user);
     // 1️⃣ Request permission
     const { status } =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -54,7 +54,7 @@ export default function JoinTournament() {
 
     // 4️⃣ Get selected image
     const selectedImage = result.assets[0];
-    console.log("Selected image:", selectedImage);
+    // console.log("Selected image:", selectedImage);
 
     // Optional: basic validation
     if (!selectedImage?.uri) {
@@ -71,40 +71,71 @@ export default function JoinTournament() {
   }
 };
 
+  // const handleSubmit = async () => {
+  //   if (!gameId || !transactionId || !receipt) {
+  //     Alert.alert("Error", "All fields are required");
+  //     return;
+  //   }
+
+  //   try {
+
+  //     setLoading(true);
+  //     console.log("User ID:", user);
+  //     await participantService.joinTournament({
+  //       tournamentId: id,
+  //       userId: user.$id,  
+  //       gameId: gameId,
+  //       transaction_no: transactionId,
+  //       receiptFile: receipt,
+  //     });
+  //     console.log("Joined tournament successfully");
+  //     Alert.alert(
+  //       "Submitted",
+  //       "Your payment is under verification.",
+  //       [
+  //         {
+  //           text: "OK",
+  //           onPress: () => router.back(),
+  //         },
+  //       ]
+  //     );
+  //   } catch (error) {
+  //     console.log("PPPPPPPPPP : ",error);
+  //     // Alert.alert("Error", "Failed to submit participation");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const handleSubmit = async () => {
-    if (!gameId || !transactionId || !receipt) {
-      Alert.alert("Error", "All fields are required");
-      return;
-    }
+  if (!gameId || !transactionId || !receipt) {
+    Alert.alert("Error", "All fields are required");
+    return;
+  }
 
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      await participantService.joinTournament({
-        tournamentId: id,
-        userId: user.$id,  
-        gameId,
-        transactionId,
-        receiptFile: receipt,
-      });
-      console.log("Joined tournament successfully");
-      // Alert.alert(
-      //   "Submitted",
-      //   "Your payment is under verification.",
-      //   [
-      //     {
-      //       text: "OK",
-      //       onPress: () => router.back(),
-      //     },
-      //   ]
-      // );
-    } catch (error) {
-      console.log("PPPPPPPPPP : ",error);
-      // Alert.alert("Error", "Failed to submit participation");
-    } finally {
-      setLoading(false);
-    }
-  };
+    await participantService.joinTournament({
+      tournamentId: id,
+      userId: user.$id,
+      gameId,
+      transaction_no: transactionId,
+      receiptFile: receipt,
+    });
+
+    router.replace({
+      pathname: "/(tabs)/home/success",
+      params: { id },
+    });
+
+  } catch (error) {
+    console.log(error);
+    Alert.alert("Error", "Failed to join tournament");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <SafeAreaView style={{ flex: 1 }}>

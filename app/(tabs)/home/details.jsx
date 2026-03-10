@@ -7,24 +7,54 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
-import { useEffect, useState } from "react";
-import { useLocalSearchParams } from "expo-router";
+import { useFocusEffect } from "expo-router";
+import { useEffect, useState,useCallback } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import tournamentService from "../../../lib/appwrite/database";
-import { useRouter } from "expo-router";
+import { Query } from "react-native-appwrite";
+import { useAuth } from "../../../context/authContext";
+import client from "../../../lib/appwrite/client";
+import { Databases } from 'react-native-appwrite';
+
+
+const DATABASE_ID = "6992ce540025a687a83e";
+const PARTICIPANTS_COLLECTION_ID = "tournament_participants";
+const user_COLLECTION_ID = "users";
 
 
 export default function TournamentDetails() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-
+  const { user } = useAuth();
+  const databases = new Databases(client);
 
   const [tournament, setTournament] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const [joined, setJoined] = useState(false);
+  const [joinStatus, setJoinStatus] = useState(null);
+
   useEffect(() => {
-    fetchTournament();
-  }, []);
+    if (id) {
+      console.log("Fetching tournament details for ID:", id);
+      fetchTournament();
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (user && id) {
+      console.log("User and tournament ID available, checking join status...");
+      checkIfJoined();
+    }
+  }, [user, id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (id) fetchTournament();
+      if (user && id) checkIfJoined();
+    }, [id, user])
+  );
 
   const fetchTournament = async () => {
     try {
@@ -38,14 +68,49 @@ export default function TournamentDetails() {
     }
   };
 
+  const checkIfJoined = async () => {
+    console.log("Checking if user has joined tournament... User ID:", user.$id, "Tournament ID:", id);
+    try {
+      const userIds=await databases.listDocuments(
+        DATABASE_ID,
+        user_COLLECTION_ID,
+        [
+        Query.equal("user_id", user.$id)
+      ]
+        
+      );
+      console.log("Userssssssssssssssssssssssssss document fetched for ID:", userIds.documents[0]);
+      const userId_get=userIds.documents[0];
+      const res = await databases.listDocuments(
+        DATABASE_ID,
+        PARTICIPANTS_COLLECTION_ID,
+        [
+          Query.equal("tournament_id", id),
+          Query.equal("user_id", userId_get.$id),
+        ]
+      );
+      console.log("Checking join status for res   :", res);
+
+      console.log("Join check result:", res.documents.length);
+      if (res.documents.length > 0) {
+        setJoined(true);
+        setJoinStatus(res.documents[0].payment_status);
+      }
+      else{
+        setJoined(false);
+        setJoinStatus(null);
+      }
+      console.log("Join status:", joinStatus);
+    } catch (error) {
+      console.log("Join check error:", error);
+    }
+  };
+
   const handleJoinPress = () => {
-   
-      router.push({
-        pathname: "/(tabs)/home/join",
-        params: { id: tournament.$id },
-      })
-    
-    // Alert.alert("Join", "Proceed to payment & registration flow");
+    router.push({
+      pathname: "/(tabs)/home/join",
+      params: { id: tournament.$id },
+    });
   };
 
   if (loading) {
@@ -69,6 +134,13 @@ export default function TournamentDetails() {
 
   const isFull = slotsLeft <= 0;
 
+  const renderStatusText = () => {
+    if (joinStatus === "pending") return "⏳ Pending Verification";
+    if (joinStatus === "verified") return "✅ Joined";
+    if (joinStatus === "rejected") return "❌ Rejected";
+    // return "Joined";
+  };
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <ScrollView style={styles.container}>
@@ -76,6 +148,7 @@ export default function TournamentDetails() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>{tournament.title}</Text>
+
           <View
             style={[
               styles.statusBadge,
@@ -93,12 +166,13 @@ export default function TournamentDetails() {
           </View>
         </View>
 
-        {/* Game & Date */}
+        {/* Game */}
         <View style={styles.section}>
           <Text style={styles.label}>Game</Text>
           <Text style={styles.value}>{tournament.game}</Text>
         </View>
 
+        {/* Date */}
         <View style={styles.section}>
           <Text style={styles.label}>Starting Time</Text>
           <Text style={styles.value}>
@@ -129,6 +203,7 @@ export default function TournamentDetails() {
           <Text style={styles.value}>
             {tournament.currentPlayers || 0} / {tournament.maxPlayers}
           </Text>
+
           <Text style={{ color: "#aaa", marginTop: 4 }}>
             {isFull ? "Tournament Full" : `${slotsLeft} Slots Left`}
           </Text>
@@ -149,25 +224,35 @@ export default function TournamentDetails() {
             {tournament.rules || "Rules will be shared before match."}
           </Text>
         </View>
-
       </ScrollView>
 
-      {/* Join Button */}
+      {/* Footer Button */}
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={[
-            styles.joinButton,
-            {
-              backgroundColor: isFull ? "#555" : "#4caf50",
-            },
-          ]}
-          disabled={isFull}
-          onPress={handleJoinPress}
-        >
-          <Text style={styles.joinText}>
-            {isFull ? "Tournament Full" : "Join Tournament"}
-          </Text>
-        </TouchableOpacity>
+
+        {!joined ? (
+          <TouchableOpacity
+            style={[
+              styles.joinButton,
+              { backgroundColor: isFull ? "#555" : "#4caf50" },
+            ]}
+            disabled={isFull}
+            onPress={handleJoinPress}
+          >
+            <Text style={styles.joinText}>
+              {isFull ? "Tournament Full" : "Join Tournament"}
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={[styles.joinButton, { backgroundColor: "#2196F3" }]}
+            disabled
+          >
+            <Text style={styles.joinText}>
+              {renderStatusText()}
+            </Text>
+          </TouchableOpacity>
+        )}
+
       </View>
     </SafeAreaView>
   );

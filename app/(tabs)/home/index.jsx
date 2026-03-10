@@ -54,7 +54,9 @@ export default function Home() {
       })
     }
   >
+
     {/* Header */}
+    
     <View style={styles.headerRow}>
       <View style={styles.gameBadge}>
         <Text style={styles.gameBadgeText}>{item.game}</Text>
