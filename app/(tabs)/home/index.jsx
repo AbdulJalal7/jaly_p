@@ -49,7 +49,7 @@ export default function Home() {
     activeOpacity={0.9}
     onPress={() =>
       router.push({
-        pathname: "/(tabs)/home/details",
+        pathname: "/(details)/details",
         params: { id: item.$id },
       })
     }

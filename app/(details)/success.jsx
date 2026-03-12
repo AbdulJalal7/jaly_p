@@ -25,7 +25,7 @@ export default function Success() {
         }}
         onPress={() =>
           router.replace({
-            pathname: "/(tabs)/home/details",
+            pathname: "/(details)/details",
             params: { id },
           })
         }

@@ -13,8 +13,8 @@ import { useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
-import participantService from "../../../lib/appwrite/participants";
-import { useAuth } from "../../../context/authContext";
+import participantService from "../../lib/appwrite/participants";
+import { useAuth } from "../../context/authContext";
 
 export default function JoinTournament() {
   const { id } = useLocalSearchParams(); // tournament id
@@ -125,7 +125,7 @@ export default function JoinTournament() {
     });
 
     router.replace({
-      pathname: "/(tabs)/home/success",
+      pathname: "/(details)/success",
       params: { id },
     });
 

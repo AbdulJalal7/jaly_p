@@ -11,10 +11,10 @@ import { useFocusEffect } from "expo-router";
 import { useEffect, useState,useCallback } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import tournamentService from "../../../lib/appwrite/database";
+import tournamentService from "../../lib/appwrite/database";
 import { Query } from "react-native-appwrite";
-import { useAuth } from "../../../context/authContext";
-import client from "../../../lib/appwrite/client";
+import { useAuth } from "../../context/authContext";
+import client from "../../lib/appwrite/client";
 import { Databases } from 'react-native-appwrite';
 
 
@@ -108,7 +108,7 @@ export default function TournamentDetails() {
 
   const handleJoinPress = () => {
     router.push({
-      pathname: "/(tabs)/home/join",
+      pathname: "/(details)/join",
       params: { id: tournament.$id },
     });
   };
