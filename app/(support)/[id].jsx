@@ -1,27 +1,64 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import supportService from '../../lib/appwrite/support';
 
 export default function TicketDetails() {
   const { id } = useLocalSearchParams();
+  const [messages, setMessages] = useState([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [replyText, setReplyText] = useState("");
+  const [isReplying, setIsReplying] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [ticket, setTicket] = useState(null);
-  const [loading, setLoading] = useState(true);
+  
+
+  const fetchTicket = async () => {
+    try {
+      setLoading(true);
+      const data = await supportService.getTicket(id);
+      setTicket(data);
+    } catch (error) {
+      console.error('Error fetching ticket details', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMessages = async () => {
+    try {
+      setLoadingMessages(true);
+      const data = await supportService.getTicketMessages(id);
+      setMessages(data.documents);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    } finally {
+      setLoadingMessages(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchTicket = async () => {
-      try {
-        setLoading(true);
-        const data = await supportService.getTicket(id);
-        setTicket(data);
-      } catch (error) {
-        console.error('Error fetching ticket details', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (id) fetchTicket();
+    if (id) {
+      fetchTicket();
+      fetchMessages();
+    }
   }, [id]);
+
+  const handleReplySubmit = async () => {
+    if (!replyText.trim()) return;
+    
+    try {
+      setIsReplying(true);
+      await supportService.userReply(id, ticket.userId, replyText.trim());
+      setReplyText("");
+      fetchMessages(); // Refresh chat
+      // Optionally refresh ticket for status change if needed locally
+    } catch (error) {
+      console.error('Error sending reply:', error);
+    } finally {
+      setIsReplying(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -40,7 +77,11 @@ export default function TicketDetails() {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+    <KeyboardAvoidingView 
+      style={styles.container} 
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={90}
+    >
       <View style={styles.headerCard}>
         <View style={styles.titleRow}>
           <Text style={styles.subject}>{ticket.subject}</Text>
@@ -49,26 +90,58 @@ export default function TicketDetails() {
           </View>
         </View>
         <Text style={styles.date}>
-          Submitted on: {new Date(ticket.$createdAt).toLocaleString()}
+          ID: {id} • Created: {new Date(ticket.$createdAt).toLocaleDateString()}
         </Text>
       </View>
 
-      <View style={styles.messageCard}>
-        <Text style={styles.sectionLabel}>Your Message</Text>
-        <Text style={styles.messageText}>{ticket.message}</Text>
+      <View style={styles.chatContainer}>
+        {loadingMessages ? (
+          <ActivityIndicator color="#FF1A1A" />
+        ) : (
+          <FlatList
+            data={messages}
+            keyExtractor={(m) => m.$id}
+            renderItem={({ item: m }) => (
+              <View style={[
+                styles.messageBubble,
+                m.role === 'admin' ? styles.adminBubble : styles.userBubble
+              ]}>
+                <Text style={styles.messageRole}>
+                  {m.role === 'admin' ? 'Support' : 'You'}
+                </Text>
+                <Text style={styles.messageContent}>{m.message}</Text>
+                <Text style={styles.messageTime}>
+                  {new Date(m.$createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </Text>
+              </View>
+            )}
+            contentContainerStyle={{ padding: 16 }}
+          />
+        )}
       </View>
 
-      {ticket.adminReply ? (
-        <View style={styles.replyCard}>
-          <Text style={styles.sectionLabelReply}>Support Reply</Text>
-          <Text style={styles.replyText}>{ticket.adminReply}</Text>
-        </View>
-      ) : (
-        <View style={styles.noReplyCard}>
-          <Text style={styles.noReplyText}>Support has not replied yet. Please check back later.</Text>
-        </View>
-      )}
-    </ScrollView>
+      <View style={styles.replyArea}>
+        <TextInput
+          style={styles.replyInput}
+          placeholder="Type your message..."
+          placeholderTextColor="#5C5C77"
+          multiline
+          value={replyText}
+          onChangeText={setReplyText}
+        />
+        <TouchableOpacity
+          style={[styles.sendButton, (!replyText.trim() || isReplying) && { opacity: 0.5 }]}
+          onPress={handleReplySubmit}
+          disabled={!replyText.trim() || isReplying}
+        >
+          {isReplying ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Text style={styles.sendButtonText}>Send</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -91,20 +164,18 @@ const styles = StyleSheet.create({
   headerCard: {
     backgroundColor: '#1C1C2E',
     padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#2A2A40',
+    borderBottomWidth: 1,
+    borderBottomColor: '#2A2A40',
   },
   titleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 8,
+    alignItems: 'center',
+    marginBottom: 4,
   },
   subject: {
     color: '#FFFFFF',
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     flex: 1,
     marginRight: 12,
@@ -113,7 +184,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
-    marginTop: 2,
   },
   statusOpen: {
     backgroundColor: '#ff980020',
@@ -134,55 +204,75 @@ const styles = StyleSheet.create({
     color: '#5C5C77',
     fontSize: 12,
   },
-  messageCard: {
-    backgroundColor: '#1C1C2E',
-    padding: 16,
+  chatContainer: {
+    flex: 1,
+  },
+  messageBubble: {
+    maxWidth: '85%',
+    padding: 12,
     borderRadius: 12,
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  sectionLabel: {
-    color: '#5C5C77',
-    fontSize: 12,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    textTransform: 'uppercase',
-  },
-  messageText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  replyCard: {
-    backgroundColor: '#FF1A1A10',
-    padding: 16,
-    borderRadius: 12,
+  userBubble: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#FF1A1A20',
+    borderColor: '#FF1A1A40',
     borderWidth: 1,
-    borderColor: '#FF1A1A50',
-    marginTop: 8,
   },
-  sectionLabelReply: {
-    color: '#FF1A1A',
-    fontSize: 12,
+  adminBubble: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#2A2A40',
+  },
+  messageRole: {
+    fontSize: 10,
     fontWeight: 'bold',
-    marginBottom: 8,
+    color: '#8E8E9F',
+    marginBottom: 4,
     textTransform: 'uppercase',
   },
-  replyText: {
+  messageContent: {
     color: '#FFFFFF',
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 14,
+    lineHeight: 20,
   },
-  noReplyCard: {
-    padding: 16,
+  messageTime: {
+    fontSize: 9,
+    color: '#5C5C77',
+    alignSelf: 'flex-end',
+    marginTop: 4,
+  },
+  replyArea: {
+    flexDirection: 'row',
+    padding: 12,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 12,
+    borderTopWidth: 1,
+    borderTopColor: '#2A2A40',
+    backgroundColor: '#1C1C2E',
     alignItems: 'center',
-    marginTop: 16,
-    borderStyle: 'dashed',
+  },
+  replyInput: {
+    flex: 1,
+    backgroundColor: '#0F0F1A',
     borderWidth: 1,
     borderColor: '#2A2A40',
-    borderRadius: 12,
+    borderRadius: 24,
+    color: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    fontSize: 16,
+    maxHeight: 100,
+    marginRight: 10,
   },
-  noReplyText: {
-    color: '#5C5C77',
-    textAlign: 'center',
-  }
+  sendButton: {
+    backgroundColor: '#FF1A1A',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    minWidth: 70,
+    alignItems: 'center',
+  },
+  sendButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
 });

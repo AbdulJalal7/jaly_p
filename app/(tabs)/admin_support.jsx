@@ -18,8 +18,10 @@ export default function AdminSupportTickets() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all"); // 'all', 'open', 'resolved'
   
-  // Modal state for replying
+  // Conversation state
   const [selectedTicket, setSelectedTicket] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [isReplying, setIsReplying] = useState(false);
 
@@ -41,6 +43,26 @@ export default function AdminSupportTickets() {
     fetchTickets();
   }, [filter]);
 
+  const fetchMessages = async (ticketId) => {
+    try {
+      setLoadingMessages(true);
+      const data = await supportService.getTicketMessages(ticketId);
+      setMessages(data.documents);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+    } finally {
+      setLoadingMessages(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedTicket) {
+      fetchMessages(selectedTicket.$id);
+    } else {
+      setMessages([]);
+    }
+  }, [selectedTicket]);
+
   const handleReplySubmit = async () => {
     if (!replyText.trim()) {
       Alert.alert("Error", "Reply cannot be empty.");
@@ -49,11 +71,13 @@ export default function AdminSupportTickets() {
     
     try {
       setIsReplying(true);
-      await supportService.replyToTicket(selectedTicket.$id, replyText.trim(), "resolved");
-      Alert.alert("Success", "Ticket updated and marked as resolved.");
-      setSelectedTicket(null);
+      // For admin, we assume admin ID is available or just use "admin" string if auth not scoped here
+      // Based on current context, we use "admin" as placeholder or actual ID if available
+      await supportService.replyToTicket(selectedTicket.$id, "admin_user", replyText.trim());
+      
       setReplyText("");
-      fetchTickets(); // Refresh list
+      fetchMessages(selectedTicket.$id); // Refresh chat
+      fetchTickets(); // Refresh list to update status/last message
     } catch (error) {
       Alert.alert("Error", "Failed to send reply.");
     } finally {
@@ -81,27 +105,20 @@ export default function AdminSupportTickets() {
       
       <View style={styles.ticketFooter}>
         <Text style={styles.ticketDate}>
-          {new Date(item.$createdAt).toLocaleDateString()}
+          Last: {new Date(item.lastMessageAt || item.$createdAt).toLocaleDateString()}
         </Text>
-        {item.status === 'open' && (
-          <TouchableOpacity 
-            style={styles.replyButton}
-            onPress={() => {
-              setSelectedTicket(item);
-              setReplyText("");
-            }}
-          >
-            <Text style={styles.replyButtonText}>Reply & Resolve</Text>
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity 
+          style={styles.replyButton}
+          onPress={() => {
+            setSelectedTicket(item);
+            setReplyText("");
+          }}
+        >
+          <Text style={styles.replyButtonText}>
+            {item.status === 'open' ? 'View & Reply' : 'View History'}
+          </Text>
+        </TouchableOpacity>
       </View>
-      
-      {item.adminReply && (
-        <View style={styles.adminReplyBox}>
-          <Text style={styles.adminReplyLabel}>Your Reply:</Text>
-          <Text style={styles.adminReplyText}>{item.adminReply}</Text>
-        </View>
-      )}
     </View>
   );
 
@@ -146,42 +163,63 @@ export default function AdminSupportTickets() {
       <Modal visible={!!selectedTicket} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Reply to Ticket</Text>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Conversation</Text>
+              <TouchableOpacity onPress={() => setSelectedTicket(null)}>
+                <Text style={styles.closeBtnText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            
             <Text style={styles.modalSubtitle}>
               Subject: {selectedTicket?.subject}
             </Text>
-            <Text style={styles.modalMessageBox}>
-              {selectedTicket?.message}
-            </Text>
 
-            <TextInput
-              style={styles.replyInput}
-              placeholder="Type your response here..."
-              placeholderTextColor="#5C5C77"
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-              value={replyText}
-              onChangeText={setReplyText}
-            />
+            <View style={styles.chatContainer}>
+              {loadingMessages ? (
+                <ActivityIndicator color="#FF1A1A" />
+              ) : (
+                <FlatList
+                  data={messages}
+                  keyExtractor={(m) => m.$id}
+                  renderItem={({ item: m }) => (
+                    <View style={[
+                      styles.messageBubble,
+                      m.role === 'admin' ? styles.adminBubble : styles.userBubble
+                    ]}>
+                      <Text style={styles.messageRole}>
+                        {m.role === 'admin' ? 'You' : 'User'}
+                      </Text>
+                      <Text style={styles.messageContent}>{m.message}</Text>
+                      <Text style={styles.messageTime}>
+                        {new Date(m.$createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </Text>
+                    </View>
+                  )}
+                  inverted={false}
+                  contentContainerStyle={{ paddingVertical: 10 }}
+                />
+              )}
+            </View>
 
-            <View style={styles.modalActions}>
+            <View style={styles.replyArea}>
+              <TextInput
+                style={styles.replyInput}
+                placeholder="Type your response..."
+                placeholderTextColor="#5C5C77"
+                multiline
+                value={replyText}
+                onChangeText={setReplyText}
+              />
+
               <TouchableOpacity
-                style={styles.cancelBtn}
-                onPress={() => setSelectedTicket(null)}
-                disabled={isReplying}
-              >
-                <Text style={styles.cancelBtnText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.submitReplyBtn, isReplying && { opacity: 0.5 }]}
+                style={[styles.submitReplyBtn, (!replyText.trim() || isReplying) && { opacity: 0.5 }]}
                 onPress={handleReplySubmit}
-                disabled={isReplying}
+                disabled={!replyText.trim() || isReplying}
               >
                 {isReplying ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
-                  <Text style={styles.submitReplyBtnText}>Send & Resolve</Text>
+                  <Text style={styles.submitReplyBtnText}>Send</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -336,66 +374,103 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: "#000000AA",
-    justifyContent: "center",
-    padding: 20,
+    justifyContent: "flex-end",
   },
   modalContent: {
     backgroundColor: "#1C1C2E",
-    borderRadius: 12,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     padding: 20,
+    height: "80%",
     borderWidth: 1,
     borderColor: "#2A2A40",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  closeBtnText: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "bold",
   },
   modalTitle: {
     color: "#FFFFFF",
     fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 12,
   },
   modalSubtitle: {
     color: "#8E8E9F",
     fontSize: 14,
-    marginBottom: 8,
-  },
-  modalMessageBox: {
-    backgroundColor: "#0F0F1A",
-    color: "#D0D0E0",
-    padding: 12,
-    borderRadius: 8,
-    fontSize: 14,
     marginBottom: 16,
   },
+  chatContainer: {
+    flex: 1,
+    backgroundColor: "#0F0F1A",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+  },
+  messageBubble: {
+    maxWidth: "85%",
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  userBubble: {
+    alignSelf: "flex-start",
+    backgroundColor: "#2A2A40",
+  },
+  adminBubble: {
+    alignSelf: "flex-end",
+    backgroundColor: "#FF1A1A20",
+    borderColor: "#FF1A1A40",
+    borderWidth: 1,
+  },
+  messageRole: {
+    fontSize: 10,
+    fontWeight: "bold",
+    color: "#8E8E9F",
+    marginBottom: 4,
+    textTransform: "uppercase",
+  },
+  messageContent: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  messageTime: {
+    fontSize: 9,
+    color: "#5C5C77",
+    alignSelf: "flex-end",
+    marginTop: 4,
+  },
+  replyArea: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   replyInput: {
+    flex: 1,
     backgroundColor: "#0F0F1A",
     borderWidth: 1,
     borderColor: "#2A2A40",
-    borderRadius: 8,
+    borderRadius: 24,
     color: "#FFFFFF",
-    padding: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     fontSize: 16,
-    height: 100,
-    marginBottom: 20,
-  },
-  modalActions: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-  },
-  cancelBtn: {
-    padding: 12,
-    marginRight: 12,
-  },
-  cancelBtnText: {
-    color: "#8E8E9F",
-    fontWeight: "bold",
+    maxHeight: 100,
+    marginRight: 10,
   },
   submitReplyBtn: {
     backgroundColor: "#FF1A1A",
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
+    width: 60,
+    height: 44,
+    borderRadius: 22,
     justifyContent: "center",
     alignItems: "center",
-    minWidth: 120,
   },
   submitReplyBtnText: {
     color: "white",
