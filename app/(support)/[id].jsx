@@ -12,6 +12,7 @@ export default function TicketDetails() {
   const [loading, setLoading] = useState(false);
   const [ticket, setTicket] = useState(null);
   const flatListRef = useRef(null);
+  const inputRef = useRef(null);
 
   const fetchTicket = async () => {
     try {
@@ -43,6 +44,13 @@ export default function TicketDetails() {
       fetchMessages();
     }
   }, [id]);
+
+  useEffect(() => {
+    const focusTimeout = setTimeout(() => {
+      inputRef.current?.focus();
+    }, 500); // Wait for transition to finish
+    return () => clearTimeout(focusTimeout);
+  }, []);
 
   const handleReplySubmit = async () => {
     if (!replyText.trim()) return;
@@ -122,13 +130,13 @@ export default function TicketDetails() {
 
       <View style={styles.replyArea}>
         <TextInput
+          ref={inputRef}
           style={styles.replyInput}
           placeholder="Type your message..."
           placeholderTextColor="#5C5C77"
           multiline
           value={replyText}
           onChangeText={setReplyText}
-          autoFocus={true}
         />
         <TouchableOpacity
           style={[styles.sendButton, (!replyText.trim() || isReplying) && { opacity: 0.5 }]}

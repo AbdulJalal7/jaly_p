@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -24,6 +24,7 @@ export default function AdminSupportTickets() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [isReplying, setIsReplying] = useState(false);
+  const inputRef = useRef(null);
 
   const fetchTickets = async () => {
     try {
@@ -68,6 +69,7 @@ export default function AdminSupportTickets() {
       Alert.alert("Error", "Reply cannot be empty.");
       return;
     }
+    
     
     try {
       setIsReplying(true);
@@ -161,7 +163,16 @@ export default function AdminSupportTickets() {
       )}
 
       {/* Reply Modal */}
-      <Modal visible={!!selectedTicket} transparent animationType="slide">
+      <Modal 
+        visible={!!selectedTicket} 
+        transparent 
+        animationType="slide"
+        onShow={() => {
+          setTimeout(() => {
+            inputRef.current?.focus();
+          }, 100);
+        }}
+      >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -180,7 +191,8 @@ export default function AdminSupportTickets() {
                 <ActivityIndicator color="#FF1A1A" />
               ) : (
                 <FlatList
-                  data={messages}
+                  inverted
+                  data={[...messages].reverse()}
                   keyExtractor={(m) => m.$id}
                   renderItem={({ item: m }) => (
                     <View style={[
@@ -196,21 +208,21 @@ export default function AdminSupportTickets() {
                       </Text>
                     </View>
                   )}
-                  inverted={false}
                   contentContainerStyle={{ paddingVertical: 10 }}
                 />
               )}
             </View>
 
             <View style={styles.replyArea}>
-              <TextInput
-                style={styles.replyInput}
-                placeholder="Type your response..."
-                placeholderTextColor="#5C5C77"
-                multiline
-                value={replyText}
-                onChangeText={setReplyText}
-              />
+                <TextInput
+                  ref={inputRef}
+                  style={styles.replyInput}
+                  placeholder="Type your response..."
+                  placeholderTextColor="#5C5C77"
+                  multiline
+                  value={replyText}
+                  onChangeText={setReplyText}
+                />
 
               <TouchableOpacity
                 style={[styles.submitReplyBtn, (!replyText.trim() || isReplying) && { opacity: 0.5 }]}
