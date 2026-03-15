@@ -8,7 +8,7 @@ export default function TabsLayout() {
   console.log("Is admin : ",isAdmin);
   return (
     <Tabs screenOptions={{ headerShown: false }}>
-      <Tabs.Screen name="home" options={{ title: "Home" }} />
+      <Tabs.Screen name="home/index" options={{ title: "Home" }} />
       <Tabs.Screen name="tournament" options={{ title: "Tournament" }} />
       <Tabs.Screen name="profile" options={{ title: "Profile" }} />
  

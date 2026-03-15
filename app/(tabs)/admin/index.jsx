@@ -150,6 +150,7 @@ export default function AdminSupportTickets() {
         </View>
       ) : (
         <FlatList
+        inverted
           data={tickets}
           keyExtractor={(item) => item.$id}
           renderItem={renderTicket}
