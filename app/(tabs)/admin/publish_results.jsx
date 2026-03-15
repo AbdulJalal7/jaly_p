@@ -11,8 +11,8 @@ import {
 import { useState, useCallback } from "react";
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import resultsService from "../../lib/appwrite/results";
-import tournamentService from "../../lib/appwrite/database";
+import resultsService from "../../../lib/appwrite/results";
+import tournamentService from "../../../lib/appwrite/database";
 
 export default function PublishResults() {
   const { id } = useLocalSearchParams(); // tournament ID
@@ -121,7 +121,7 @@ export default function PublishResults() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#121212" }}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.replace("/(tabs)/admin/tournaments")}>
           <Text style={styles.backText}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>

@@ -24,7 +24,19 @@ export default function SupportTickets() {
   };
 
   useEffect(() => {
-    fetchTickets();
+    if (user?.$id) {
+       // Redirect to the active ticket instead of showing a list
+       const redirectToActiveTicket = async () => {
+         try {
+           const ticket = await supportService.getOrCreateActiveTicket(user.$id);
+           router.replace(`/(support)/${ticket.$id}`);
+         } catch (error) {
+           console.error("Redirect to active ticket failed:", error);
+           fetchTickets(); // Fallback to fetching tickets if something goes wrong
+         }
+       };
+       redirectToActiveTicket();
+    }
   }, [user]);
 
   const renderTicket = ({ item }) => (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import supportService from '../../lib/appwrite/support';
@@ -11,7 +11,7 @@ export default function TicketDetails() {
   const [isReplying, setIsReplying] = useState(false);
   const [loading, setLoading] = useState(false);
   const [ticket, setTicket] = useState(null);
-  
+  const flatListRef = useRef(null);
 
   const fetchTicket = async () => {
     try {
@@ -51,8 +51,7 @@ export default function TicketDetails() {
       setIsReplying(true);
       await supportService.userReply(id, ticket.userId, replyText.trim());
       setReplyText("");
-      fetchMessages(); // Refresh chat
-      // Optionally refresh ticket for status change if needed locally
+      await fetchMessages(); // Refresh chat
     } catch (error) {
       console.error('Error sending reply:', error);
     } finally {
@@ -79,8 +78,8 @@ export default function TicketDetails() {
   return (
     <KeyboardAvoidingView 
       style={styles.container} 
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={90}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 100}
     >
       <View style={styles.headerCard}>
         <View style={styles.titleRow}>
@@ -95,11 +94,12 @@ export default function TicketDetails() {
       </View>
 
       <View style={styles.chatContainer}>
-        {loadingMessages ? (
+        {loadingMessages && messages.length === 0 ? (
           <ActivityIndicator color="#FF1A1A" />
         ) : (
           <FlatList
-            data={messages}
+            inverted
+            data={[...messages].reverse()}
             keyExtractor={(m) => m.$id}
             renderItem={({ item: m }) => (
               <View style={[
@@ -128,6 +128,7 @@ export default function TicketDetails() {
           multiline
           value={replyText}
           onChangeText={setReplyText}
+          autoFocus={true}
         />
         <TouchableOpacity
           style={[styles.sendButton, (!replyText.trim() || isReplying) && { opacity: 0.5 }]}

@@ -11,7 +11,7 @@ import {
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import supportService from "../../lib/appwrite/support";
+import supportService from "../../../lib/appwrite/support";
 
 export default function AdminSupportTickets() {
   const [tickets, setTickets] = useState([]);

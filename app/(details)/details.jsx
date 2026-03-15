@@ -330,26 +330,8 @@ export default function TournamentDetails() {
           </TouchableOpacity>
         )}
 
-        {/* Admin Publish Results Button */}
-        {tournament.status === "completed" && (
-          <TouchableOpacity
-            style={[styles.joinButton, { backgroundColor: "#9c27b0", marginTop: 12 }]}
-            onPress={() => router.push({
-              pathname: "/(admin)/publish_results",
-              params: { id: tournament.$id }
-            })}
-          >
-            <Text style={styles.joinText}>Admin: Publish Results</Text>
-          </TouchableOpacity>
-        )}
 
-        {/* Admin Support Tickets Button */}
-        <TouchableOpacity
-          style={[styles.joinButton, { backgroundColor: "#FF1A1A", marginTop: 12 }]}
-          onPress={() => router.push("/(admin)/support_tickets")}
-        >
-          <Text style={styles.joinText}>Admin: Support Dashboard</Text>
-        </TouchableOpacity>
+       
 
       </View>
       )}
