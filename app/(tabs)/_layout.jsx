@@ -11,6 +11,28 @@ export default function TabsLayout() {
       <Tabs.Screen name="home/index" options={{ title: "Home" }} />
       <Tabs.Screen name="tournament" options={{ title: "Tournament" }} />
       <Tabs.Screen name="profile" options={{ title: "Profile" }} />
+
+      <Tabs.Screen 
+        name="wallet/index"  
+        options={{ 
+          title: "Wallet",
+          href: "/wallet" 
+        }} 
+      />
+      <Tabs.Screen 
+        name="wallet/deposit"  
+        options={{ 
+          title: "Deposit",
+          href: null 
+        }} 
+      />
+      <Tabs.Screen 
+        name="wallet/withdraw"  
+        options={{ 
+          title: "Withdraw",
+          href: null 
+        }} 
+      />
  
       <Tabs.Screen 
         name="admin/index"  
@@ -25,6 +47,13 @@ export default function TabsLayout() {
         options={{ 
           title: "Manage Tournaments",
           href: isAdmin ? "/admin/tournaments" : null
+        }} 
+      />
+      <Tabs.Screen 
+        name="admin/wallet_requests"  
+        options={{ 
+          title: "Wallet Requests",
+          href: isAdmin ? "/admin/wallet_requests" : null
         }} 
       />
       <Tabs.Screen 
