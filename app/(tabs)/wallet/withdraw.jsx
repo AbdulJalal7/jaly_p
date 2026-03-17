@@ -22,8 +22,8 @@ export default function WithdrawScreen() {
     const fetchBalance = async () => {
       try {
         if (user?.$id) {
-          const userStat = await walletService.getUserWallet(user.$id);
-          setBalance(userStat.wallet_balance || 0);
+          // const userStat = await walletService.getUserWallet(user.$id);
+          setBalance(user.wallet_balance || 0);
         }
       } catch (error) {
         console.error("Failed to fetch balance", error);

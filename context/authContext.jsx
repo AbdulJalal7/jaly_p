@@ -21,6 +21,7 @@ export const AuthProvider = ({ children }) => {
 
       if (storedUser) {
         const currentUser = await authService.getCurrentUser();
+        
         setUser(currentUser);
       }
     } catch (error) {

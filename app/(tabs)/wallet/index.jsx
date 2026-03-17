@@ -17,11 +17,11 @@ export default function WalletScreen() {
     if (!user?.$id) return;
     try {
       // 1. Fetch balance
-      const userStat = await walletService.getUserWallet(user.$id);
-      setBalance(userStat.wallet_balance || 0);
+      // const userStat = await walletService.getUserWallet(user.$id);
+      setBalance(user.wallet_balance || 0);
 
       // 2. Fetch transactions
-      const history = await walletService.getUserTransactions(user.$id);
+      const history = await walletService.getUserTransactions(user);
       setTransactions(history.documents);
     } catch (error) {
       console.error("Failed to load wallet data", error);

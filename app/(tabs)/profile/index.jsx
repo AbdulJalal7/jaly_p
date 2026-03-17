@@ -51,6 +51,7 @@ export default function Profile() {
           disabled={loadingSupport}
         >
           <Text style={{ color: 'white', fontSize: 16 }}>🎧 Support / Help Center</Text>
+          <Text style={{ color: 'white', fontSize: 16 }}>{user?.name}</Text>
           {loadingSupport && <ActivityIndicator color="#FF1A1A" size="small" />}
         </TouchableOpacity>
 

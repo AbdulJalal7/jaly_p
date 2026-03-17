@@ -71,42 +71,6 @@ export default function JoinTournament() {
   }
 };
 
-  // const handleSubmit = async () => {
-  //   if (!gameId || !transactionId || !receipt) {
-  //     Alert.alert("Error", "All fields are required");
-  //     return;
-  //   }
-
-  //   try {
-
-  //     setLoading(true);
-  //     console.log("User ID:", user);
-  //     await participantService.joinTournament({
-  //       tournamentId: id,
-  //       userId: user.$id,  
-  //       gameId: gameId,
-  //       transaction_no: transactionId,
-  //       receiptFile: receipt,
-  //     });
-  //     console.log("Joined tournament successfully");
-  //     Alert.alert(
-  //       "Submitted",
-  //       "Your payment is under verification.",
-  //       [
-  //         {
-  //           text: "OK",
-  //           onPress: () => router.back(),
-  //         },
-  //       ]
-  //     );
-  //   } catch (error) {
-  //     console.log("PPPPPPPPPP : ",error);
-  //     // Alert.alert("Error", "Failed to submit participation");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   const handleSubmit = async () => {
   if (!gameId || !transactionId || !receipt) {
     Alert.alert("Error", "All fields are required");

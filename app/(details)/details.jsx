@@ -91,24 +91,15 @@ export default function TournamentDetails() {
   };
 
   const checkIfJoined = async () => {
-    console.log("Checking if user has joined tournament... User ID:", user.$id, "Tournament ID:", id);
+    console.log("Checking if user has joined tournament... User ID:", user.user_id, "Tournament ID:", id);
     try {
-      const userIds=await databases.listDocuments(
-        DATABASE_ID,
-        user_COLLECTION_ID,
-        [
-        Query.equal("user_id", user.$id)
-      ]
-        
-      );
-      console.log("Userssssssssssssssssssssssssss document fetched for ID:", userIds.documents[0]);
-      const userId_get=userIds.documents[0];
+     
       const res = await databases.listDocuments(
         DATABASE_ID,
         PARTICIPANTS_COLLECTION_ID,
         [
           Query.equal("tournament_id", id),
-          Query.equal("user_id", userId_get.$id),
+          Query.equal("user_id", user.$id),
         ]
       );
       console.log("Checking join status for res   :", res);

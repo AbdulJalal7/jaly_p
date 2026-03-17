@@ -49,7 +49,7 @@ export default function DepositScreen() {
     try {
       setLoading(true);
       await walletService.createDepositRequest({
-        userId: user.$id,
+        userId: user,
         amount,
         transactionId,
         receiptFile: receiptImage,
