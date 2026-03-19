@@ -113,10 +113,16 @@ export default function WithdrawScreen() {
           <Text style={styles.label}>Payment Method</Text>
           <View style={styles.methodSelector}>
             <TouchableOpacity 
-              style={[styles.methodBtn, method === "wallet" && styles.methodBtnActive]}
-              onPress={() => setMethod("wallet")}
+              style={[styles.methodBtn, method === "easypaisa" && styles.methodBtnActive]}
+              onPress={() => setMethod("easypaisa")}
             >
-              <Text style={[styles.methodText, method === "wallet" && styles.methodTextActive]}>wallet</Text>
+              <Text style={[styles.methodText, method === "easypaisa" && styles.methodTextActive]}>Easypaisa</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.methodBtn, method === "jazzcash" && styles.methodBtnActive]}
+              onPress={() => setMethod("jazzcash")}
+            >
+              <Text style={[styles.methodText, method === "jazzcash" && styles.methodTextActive]}>Jazzcash</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.methodBtn, method === "bank" && styles.methodBtnActive]}
@@ -126,23 +132,11 @@ export default function WithdrawScreen() {
             </TouchableOpacity>
           </View>
 
-          {method === "wallet" ? (
-            <>
-              <Text style={styles.label}>UPI ID</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="example@upi"
-                placeholderTextColor="#5C5C77"
-                value={upiId}
-                onChangeText={setUpiId}
-              />
-            </>
-          ) : (
-            <>
+            <View>
               <Text style={styles.label}>Account Name</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Full Name as in Bank"
+                placeholder="Full Name"
                 placeholderTextColor="#5C5C77"
                 value={accountName}
                 onChangeText={setAccountName}
@@ -156,8 +150,8 @@ export default function WithdrawScreen() {
                 value={accountNumber}
                 onChangeText={setAccountNumber}
               />
-            </>
-          )}
+            </View>
+      
 
           <TouchableOpacity 
             style={[styles.submitBtn, loading && styles.submitBtnDisabled]}

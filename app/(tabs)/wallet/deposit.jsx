@@ -79,9 +79,10 @@ export default function DepositScreen() {
           <Text style={styles.infoTitle}>Payment Instructions</Text>
           <Text style={styles.infoText}>1. Send money to the following UPI ID:</Text>
           <View style={styles.upiContainer}>
-            <Text style={styles.upiId}>admin@example_upi</Text>
+            <Text style={styles.walletid}>Easypaisa : 03018856388</Text>
+          <Text style={styles.walletid}>Name: Abdul Jalal</Text>
+
           </View>
-          <Text style={styles.infoText}>Account Name: Admin Esports</Text>
           <Text style={styles.infoText}>2. Take a screenshot of the successful payment.</Text>
           <Text style={styles.infoText}>3. Fill out the form below with the exact amount and transaction ID.</Text>
         </View>
@@ -158,7 +159,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     alignItems: "center",
   },
-  upiId: { color: "#4caf50", fontSize: 18, fontWeight: "bold", letterSpacing: 1 },
+  walletid: { color: "#4caf50", fontSize: 18, fontWeight: "bold", letterSpacing: 1 },
   formContainer: {},
   label: { color: "#8E8E9F", fontSize: 14, marginBottom: 8, fontWeight: "bold" },
   input: {
