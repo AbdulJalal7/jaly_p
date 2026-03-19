@@ -199,9 +199,9 @@ export default function AdminWalletRequests() {
         </Text>
       </View>
       <Text style={styles.detailText}>User ID: {item.user_id}</Text>
-      <Text style={styles.detailText}>Method: {item.method.toUpperCase()}</Text>
+      <Text style={styles.detailText}>Method: {item.method}</Text>
       
-      {item.method === "UPI" ? (
+      {item.method === "wallet" ? (
         <Text style={styles.highlightText}>UPI ID: {item.upi_id}</Text>
       ) : (
         <View>

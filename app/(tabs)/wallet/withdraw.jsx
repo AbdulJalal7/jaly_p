@@ -10,7 +10,7 @@ export default function WithdrawScreen() {
   const { user } = useAuth();
   const [balance, setBalance] = useState(0);
   const [amount, setAmount] = useState("");
-  const [method, setMethod] = useState("UPI"); // 'UPI' or 'bank'
+  const [method, setMethod] = useState("wallet"); // 'wallet' or 'bank'
   const [upiId, setUpiId] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [accountName, setAccountName] = useState("");
@@ -58,7 +58,7 @@ export default function WithdrawScreen() {
     try {
       setLoading(true);
       await walletService.createWithdrawRequest({
-        userId: user.$id,
+        user: user,
         amount,
         method,
         upiId: method === "UPI" ? upiId : null,
@@ -67,7 +67,7 @@ export default function WithdrawScreen() {
       });
 
       Alert.alert("Success", "Withdrawal request submitted. Waiting for admin approval.", [
-        { text: "OK", onPress: () => router.back() }
+        { text: "OK", onPress: () => router.push("/wallet") }
       ]);
     } catch (error) {
       Alert.alert("Error", error.message || "Failed to submit withdrawal request");
@@ -87,7 +87,7 @@ export default function WithdrawScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => router.push("/wallet")} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Withdraw Money</Text>
@@ -113,10 +113,10 @@ export default function WithdrawScreen() {
           <Text style={styles.label}>Payment Method</Text>
           <View style={styles.methodSelector}>
             <TouchableOpacity 
-              style={[styles.methodBtn, method === "UPI" && styles.methodBtnActive]}
-              onPress={() => setMethod("UPI")}
+              style={[styles.methodBtn, method === "wallet" && styles.methodBtnActive]}
+              onPress={() => setMethod("wallet")}
             >
-              <Text style={[styles.methodText, method === "UPI" && styles.methodTextActive]}>UPI</Text>
+              <Text style={[styles.methodText, method === "wallet" && styles.methodTextActive]}>wallet</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.methodBtn, method === "bank" && styles.methodBtnActive]}
@@ -126,7 +126,7 @@ export default function WithdrawScreen() {
             </TouchableOpacity>
           </View>
 
-          {method === "UPI" ? (
+          {method === "wallet" ? (
             <>
               <Text style={styles.label}>UPI ID</Text>
               <TextInput

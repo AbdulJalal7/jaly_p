@@ -32,7 +32,7 @@ export default function MyTournaments() {
     try {
       // 1. Fetch user's participation records
       const participations = await participantService.getUserParticipations(user.$id);
-      
+      console.log("participations touramentsssssssss : ",participations);  
       if (participations.length === 0) {
         setTournaments([]);
       } else {

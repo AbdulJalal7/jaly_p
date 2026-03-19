@@ -19,7 +19,7 @@ export default function WalletScreen() {
       // 1. Fetch balance
       // const userStat = await walletService.getUserWallet(user.$id);
       setBalance(user.wallet_balance || 0);
-
+      console.log("user : ",user);
       // 2. Fetch transactions
       const history = await walletService.getUserTransactions(user);
       setTransactions(history.documents);
@@ -84,7 +84,7 @@ export default function WalletScreen() {
       {/* Wallet Balance Card */}
       <View style={styles.balanceCard}>
         <Text style={styles.balanceLabel}>Available Balance</Text>
-        <Text style={styles.balanceAmount}>₹{balance.toFixed(2)}</Text>
+        <Text style={styles.balanceAmount}>Rs. {balance.toFixed(2)}</Text>
         
         <View style={styles.actionButtons}>
           <TouchableOpacity 

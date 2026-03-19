@@ -56,7 +56,7 @@ export default function DepositScreen() {
       });
 
       Alert.alert("Success", "Deposit request submitted. Waiting for admin approval.", [
-        { text: "OK", onPress: () => router.back() }
+        { text: "OK", onPress: () => router.push("/wallet") }
       ]);
     } catch (error) {
       Alert.alert("Error", error.message || "Failed to submit deposit request");
@@ -68,7 +68,7 @@ export default function DepositScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => router.push("/wallet")} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Deposit Money</Text>
