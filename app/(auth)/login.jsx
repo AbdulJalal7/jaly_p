@@ -6,8 +6,8 @@ import colors from '../config/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuth } from "../../context/authContext";
-
-
+import { OAuthProvider } from "react-native-appwrite";
+import authService from "../../lib/appwrite/auth";
 
 const Login = () => {
     const { login } = useAuth();
@@ -25,6 +25,15 @@ const Login = () => {
     }
   };
 
+  const onHandleGoogleLogin = async () => {
+    try {
+      await authService.loginWithOAuth(OAuthProvider.Google);
+      // Depending on authContext, you might need to sync state here too
+      router.replace("/(tabs)/home");
+    } catch (error) {
+      Alert.alert("Google Login failed", error.message);
+    }
+  };
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -58,6 +67,9 @@ const Login = () => {
       />
       <Text style={styles.loginButton} onPress={onHandleLogin}>
         Login
+      </Text>
+      <Text style={[styles.loginButton, { backgroundColor: '#DB4437', marginTop: 10 }]} onPress={onHandleGoogleLogin}>
+        Sign in with Google
       </Text>
       <Text
         style={styles.registerButton}

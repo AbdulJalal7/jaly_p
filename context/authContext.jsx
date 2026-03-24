@@ -13,6 +13,8 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     console.log("user : ",user);
     restoreSession();
+    console.log("user after getssssssssss : ",user);
+
   }, []);
 
   // 🔐 Restore session from secure storage
