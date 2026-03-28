@@ -13,6 +13,18 @@ export default function TabsLayout() {
       <Tabs.Screen name="profile" options={{ title: "Profile" }} />
 
       <Tabs.Screen 
+        name="challenges/index"  
+        options={{ title: "1v1", href: "/challenges" }} 
+      />
+      <Tabs.Screen 
+        name="challenges/create"  
+        options={{ title: "Create Challenge", href: null }} 
+      />
+      <Tabs.Screen 
+        name="challenges/my_challenges"  
+        options={{ title: "My Challenges", href: null }} 
+      />
+      <Tabs.Screen 
         name="wallet/index"  
         options={{ 
           title: "Wallet",
@@ -61,6 +73,13 @@ export default function TabsLayout() {
         options={{ 
           title: "Publish Results",
           href: null
+        }} 
+      />
+      <Tabs.Screen 
+        name="admin/challenges"  
+        options={{ 
+          title: "1v1 Admin",
+          href: isAdmin ? "/admin/challenges" : null
         }} 
       />
     </Tabs>

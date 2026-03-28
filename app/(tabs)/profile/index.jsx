@@ -12,7 +12,6 @@ export default function Profile() {
 
   const handleLogout = async () => {
     await logout();
-    router.replace("/(auth)/login");
   };
 
   const handleSupportPress = async () => {
