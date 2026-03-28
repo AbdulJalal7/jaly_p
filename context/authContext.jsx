@@ -1,10 +1,13 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import * as SecureStore from "expo-secure-store";
 import authService from "../lib/appwrite/auth";
+import client from "../lib/appwrite/client";
 
 const AuthContext = createContext();
 
 const STORAGE_KEY = "user_session";
+const DATABASE_ID = "6992ce540025a687a83e";
+const USERS_COLLECTION_ID = "users";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -16,6 +19,32 @@ export const AuthProvider = ({ children }) => {
     console.log("user after getssssssssss : ",user);
 
   }, []);
+
+  // 🔴 Appwrite Realtime Subscription
+  useEffect(() => {
+    if (!user || (!user.$id)) return;
+
+    console.log("Subscribing to Realtime events for user:", user.$id);
+    const unsubscribe = client.subscribe(
+      `databases.${DATABASE_ID}.collections.${USERS_COLLECTION_ID}.documents.${user.$id}`,
+      (response) => {
+        // When an update event occurs to this document, immediately patch the React state
+        if (
+          response.events.includes(
+            `databases.${DATABASE_ID}.collections.${USERS_COLLECTION_ID}.documents.${user.$id}.update`
+          )
+        ) {
+          console.log("Realtime user update received:", response.payload);
+          setUser((prevUser) => ({
+            ...prevUser,
+            ...response.payload,
+          }));
+        }
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user?.$id]);
 
   // 🔐 Restore session from secure storage
   const restoreSession = async () => {

@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Modal,
+  TextInput,
 } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { useEffect, useState,useCallback } from "react";
@@ -17,6 +19,7 @@ import { useAuth } from "../../context/authContext";
 import client from "../../lib/appwrite/client";
 import { Databases } from 'react-native-appwrite';
 import resultsService from "../../lib/appwrite/results";
+import participantService from "../../lib/appwrite/participants";
 
 
 const DATABASE_ID = "6992ce540025a687a83e";
@@ -40,6 +43,11 @@ export default function TournamentDetails() {
   const [activeTab, setActiveTab] = useState("overview"); // "overview" | "results"
   const [results, setResults] = useState([]);
   const [fetchingResults, setFetchingResults] = useState(false);
+
+  // Wallet Payment State
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [gameId, setGameId] = useState("");
+  const [joining, setJoining] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -120,10 +128,51 @@ export default function TournamentDetails() {
   };
 
   const handleJoinPress = () => {
-    router.push({
-      pathname: "/(details)/join",
-      params: { id: tournament.$id },
-    });
+    if (!user || user.wallet_balance === undefined) {
+      Alert.alert("Error", "Unable to retrieve wallet balance. Please log in again.");
+      return;
+    }
+    
+    if (user.wallet_balance < tournament.enteryFee) {
+      Alert.alert(
+        "Insufficient Balance",
+        `You need ₹${tournament.enteryFee} to join, but your wallet balance is ₹${user.wallet_balance}. Please deposit funds.`,
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Deposit", onPress: () => router.push("/(tabs)/wallet") },
+        ]
+      );
+      return;
+    }
+
+    setShowPaymentModal(true);
+  };
+
+  const confirmWalletJoin = async () => {
+    if (!gameId.trim()) {
+      Alert.alert("Required", "Please enter your Game ID.");
+      return;
+    }
+
+    try {
+      setJoining(true);
+      await participantService.joinWithWallet({
+        tournamentId: tournament.$id,
+        userDocId: user.$id,
+        gameId: gameId.trim(),
+        fee: tournament.enteryFee,
+        currentBalance: user.wallet_balance,
+      });
+
+      setShowPaymentModal(false);
+      Alert.alert("Success", "You have successfully joined the tournament!");
+      
+      checkIfJoined();
+    } catch (error) {
+      Alert.alert("Error", error.message || "Failed to join tournament.");
+    } finally {
+      setJoining(false);
+    }
   };
 
   if (loading) {
@@ -326,6 +375,56 @@ export default function TournamentDetails() {
 
       </View>
       )}
+
+      {/* Wallet Payment Modal */}
+      <Modal
+        visible={showPaymentModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => !joining && setShowPaymentModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Confirm Payment</Text>
+            <Text style={styles.modalText}>
+              You are paying ₹{tournament?.enteryFee} from your Wallet Balance.
+            </Text>
+            
+            <View style={{ marginBottom: 16 }}>
+              <Text style={styles.inputLabel}>Game ID</Text>
+              <TextInput
+                style={styles.gameIdInput}
+                placeholder="Enter your in-game ID"
+                placeholderTextColor="#777"
+                value={gameId}
+                onChangeText={setGameId}
+              />
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setShowPaymentModal(false)}
+                disabled={joining}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.modalButton, styles.confirmButton]}
+                onPress={confirmWalletJoin}
+                disabled={joining}
+              >
+                {joining ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.confirmButtonText}>Pay & Join</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -522,5 +621,72 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "right",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#1e1e1e",
+    width: "85%",
+    borderRadius: 16,
+    padding: 24,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#fff",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  modalText: {
+    color: "#ccc",
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  inputLabel: {
+    color: "#aaa",
+    marginBottom: 8,
+    fontSize: 14,
+  },
+  gameIdInput: {
+    backgroundColor: "#2a2a2a",
+    padding: 14,
+    borderRadius: 10,
+    color: "#fff",
+    marginBottom: 8,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  cancelButton: {
+    backgroundColor: "#333",
+    marginRight: 8,
+  },
+  cancelButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  confirmButton: {
+    backgroundColor: "#4caf50",
+    marginLeft: 8,
+  },
+  confirmButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
   },
 });
