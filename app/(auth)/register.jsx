@@ -65,7 +65,7 @@ const Register = () => {
         onChangeText={(text) => setrform({ ...rform, email: text })}
       />
 
-        <Text style={styles.label}>Phone</Text>
+        {/* <Text style={styles.label}>Phone</Text>
       <TextInput
         style={styles.input}
         placeholder="Enter your phone number"
@@ -75,7 +75,7 @@ const Register = () => {
         autoFocus={true}
         value={rform.phone}
         onChangeText={(text) => setrform({ ...rform, phone: text })}
-      />
+      /> */}
 
       <Text style={styles.label}>Password</Text>
       <TextInput

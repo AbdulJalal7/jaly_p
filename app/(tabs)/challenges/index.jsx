@@ -6,7 +6,7 @@ import client from "../../../lib/appwrite/client";
 import { useAuth } from "../../../context/authContext";
 import { useChat } from "../../../hooks/useChat";
 
-const DATABASE_ID = "6992ce540025a687a83e";
+const DATABASE_ID = process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID;
 const USERS_COLLECTION_ID = "users";
 const databases = new Databases(client);
 
@@ -14,6 +14,7 @@ export default function ChallengesScreen() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user: currentUser } = useAuth();
+
   const router = useRouter();
   const { startChat, loading: chatLoading } = useChat();
 
@@ -24,12 +25,21 @@ export default function ChallengesScreen() {
   const fetchUsers = async () => {
     if (!currentUser) return;
     try {
-      // NOTE: Query.notEqual will ensure the user cannot challenge themselves
+      // Use the account ID if available (user_id field), otherwise fallback to $id
+      const currentAccountId = currentUser.user_id || currentUser.$id;
+      
       const resp = await databases.listDocuments(DATABASE_ID, USERS_COLLECTION_ID, [
-        Query.notEqual("user_id", currentUser.$id),
+        Query.notEqual("user_id", currentAccountId),
+        Query.notEqual("$id", currentUser.$id),
         Query.limit(50),
       ]);
-      setUsers(resp.documents);
+
+      // Double-check filtering on client side for robustness
+      const filteredUsers = resp.documents.filter(
+        (u) => u.$id !== currentUser.$id && u.user_id !== currentAccountId
+      );
+      console.log("Filtered Users : ", filteredUsers);
+      setUsers(filteredUsers);
     } catch (error) {
       console.log("Error fetching users:", error);
     } finally {
