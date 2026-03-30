@@ -6,7 +6,7 @@ import client from "../lib/appwrite/client";
 const AuthContext = createContext();
 
 const STORAGE_KEY = "user_session";
-const DATABASE_ID = "6992ce540025a687a83e";
+const DATABASE_ID = process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID;
 const USERS_COLLECTION_ID = "users";
 
 export const AuthProvider = ({ children }) => {

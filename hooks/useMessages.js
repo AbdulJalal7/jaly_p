@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import client from '../lib/appwrite/client';
 import ChatService from '../lib/appwrite/chat';
 
-const DATABASE_ID = "6992ce540025a687a83e";
+const DATABASE_ID = process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID;
 const MESSAGES_COLLECTION_ID = "messages";
 
 export const useMessages = (chatId) => {
