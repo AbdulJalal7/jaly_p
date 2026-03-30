@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { Databases, Query } from "react-native-appwrite";
 import client from "../../../lib/appwrite/client";
 import { useAuth } from "../../../context/authContext";
+import { useChat } from "../../../hooks/useChat";
 
 const DATABASE_ID = "6992ce540025a687a83e";
 const USERS_COLLECTION_ID = "users";
@@ -14,6 +15,7 @@ export default function ChallengesScreen() {
   const [loading, setLoading] = useState(true);
   const { user: currentUser } = useAuth();
   const router = useRouter();
+  const { startChat, loading: chatLoading } = useChat();
 
   useEffect(() => {
     fetchUsers();
@@ -43,6 +45,18 @@ export default function ChallengesScreen() {
         opponentName: opponent.username || opponent.name || "Unknown"
       }
     });
+  };
+
+  const handleChat = async (opponent) => {
+    const chat = await startChat(opponent.$id);
+    if (chat) {
+      router.push({
+        pathname: `/chat/${chat.$id}`,
+        params: { targetUserId: opponent.$id }
+      });
+    } else {
+      Alert.alert("Error", "Could not create or open chat.");
+    }
   };
 
   if (loading) {
@@ -80,12 +94,21 @@ export default function ChallengesScreen() {
                 🏆 Wins: {item.wins || 0} | 💔 Losses: {item.losses || 0} | ⚔️ Matches: {item.total_matches || 0}
               </Text>
             </View>
-            <TouchableOpacity 
-              style={styles.challengeBtn}
-              onPress={() => handleChallenge(item)}
-            >
-              <Text style={styles.btnText}>Challenge</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <TouchableOpacity 
+                style={styles.chatBtn}
+                onPress={() => handleChat(item)}
+                disabled={chatLoading}
+              >
+                <Text style={styles.btnText}>{chatLoading ? '...' : 'Chat'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.challengeBtn}
+                onPress={() => handleChallenge(item)}
+              >
+                <Text style={styles.btnText}>Challenge</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       />
@@ -126,6 +149,13 @@ const styles = StyleSheet.create({
   stats: { fontSize: 12, color: "#aaa" },
   challengeBtn: { 
     backgroundColor: "#FF3366", 
+    paddingHorizontal: 18, 
+    paddingVertical: 10, 
+    borderRadius: 8, 
+    marginLeft: 10 
+  },
+  chatBtn: { 
+    backgroundColor: "#007AFF", 
     paddingHorizontal: 18, 
     paddingVertical: 10, 
     borderRadius: 8, 
