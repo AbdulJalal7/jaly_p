@@ -17,6 +17,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.jaly.p",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -30,6 +31,12 @@
       "expo-router",
       "expo-secure-store",
       "expo-web-browser"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "2db58539-5598-4908-9b7d-85859c083692"
+      }
+    }
   }
 }

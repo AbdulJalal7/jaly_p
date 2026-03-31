@@ -1,0 +1,41 @@
+{
+  "cli": {
+    "version": ">= 13.5.2",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_APPWRITE_PROJECT_ID": "697dfe15002b2e5b8ace",
+        "EXPO_PUBLIC_APPWRITE_ENDPOINT": "https://sgp.cloud.appwrite.io/v1",
+        "EXPO_PUBLIC_APPWRITE_DATABASE_ID": "69ca636c00163e9c30a2",
+        "EXPO_PUBLIC_APPWRITE_BUCKET_ID": "69ca76320005db678536"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_APPWRITE_PROJECT_ID": "697dfe15002b2e5b8ace",
+        "EXPO_PUBLIC_APPWRITE_ENDPOINT": "https://sgp.cloud.appwrite.io/v1",
+        "EXPO_PUBLIC_APPWRITE_DATABASE_ID": "69ca636c00163e9c30a2",
+        "EXPO_PUBLIC_APPWRITE_BUCKET_ID": "69ca76320005db678536"
+      }
+    },
+    "production": {
+      "env": {
+        "EXPO_PUBLIC_APPWRITE_PROJECT_ID": "697dfe15002b2e5b8ace",
+        "EXPO_PUBLIC_APPWRITE_ENDPOINT": "https://sgp.cloud.appwrite.io/v1",
+        "EXPO_PUBLIC_APPWRITE_DATABASE_ID": "69ca636c00163e9c30a2",
+        "EXPO_PUBLIC_APPWRITE_BUCKET_ID": "69ca76320005db678536"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
