@@ -6,11 +6,11 @@ import {
   StyleSheet,
   ActivityIndicator,
   FlatList,
-  Alert,
 } from "react-native";
 import { useState, useCallback } from "react";
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from 'react-native-toast-message';
 import resultsService from "../../../lib/appwrite/results";
 import tournamentService from "../../../lib/appwrite/database";
 
@@ -56,7 +56,7 @@ export default function PublishResults() {
       }
     } catch (error) {
       console.log(error);
-      Alert.alert("Error", "Failed to load tournament data.");
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to load tournament data.' });
     } finally {
       setLoading(false);
     }
@@ -64,7 +64,7 @@ export default function PublishResults() {
 
   const handleSubmit = async () => {
     if (!rank || !teamName) {
-      Alert.alert("Error", "Rank and Team Name are required fields.");
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Rank and Team Name are required fields.' });
       return;
     }
 
@@ -90,7 +90,7 @@ export default function PublishResults() {
 
     } catch (error) {
       console.log(error);
-      Alert.alert("Error", "Failed to publish result.");
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to publish result.' });
     } finally {
       setSubmitting(false);
     }

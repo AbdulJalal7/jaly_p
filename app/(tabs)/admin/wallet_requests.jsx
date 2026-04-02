@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, Image, Modal } from "react-native";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Image, Modal } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../../context/authContext";
 import walletService from "../../../lib/appwrite/wallet";
 import { useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import Toast from 'react-native-toast-message';
+import ConfirmModal from '../../../components/ConfirmModal';
 
 export default function AdminWalletRequests() {
   const { user } = useAuth();
@@ -13,6 +15,12 @@ export default function AdminWalletRequests() {
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalConfig, setModalConfig] = useState({
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   const fetchRequests = async () => {
     setLoading(true);
@@ -27,7 +35,7 @@ export default function AdminWalletRequests() {
       }
     } catch (error) {
       console.error("Error fetching requests:", error);
-      Alert.alert("Error", "Failed to fetch wallet requests.");
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to fetch wallet requests.' });
     } finally {
       setLoading(false);
     }
@@ -40,108 +48,84 @@ export default function AdminWalletRequests() {
   );
 
   const handleApproveDeposit = async (item) => {
-    Alert.alert(
-      "Approve Deposit",
-      `Are you sure you want to approve ₹${item.amount} for user?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Approve", 
-          style: "default",
-          onPress: async () => {
-            try {
-              setProcessingId(item.$id);
-              // Since item.user_id stored internal id:
-              await walletService.approveDeposit(item.$id, item.user_id, item.amount);
-              Alert.alert("Success", "Deposit approved.");
-              fetchRequests();
-            } catch (error) {
-              Alert.alert("Error", "Failed to approve deposit.");
-            } finally {
-              setProcessingId(null);
-            }
-          }
+    setModalConfig({
+      title: "Approve Deposit",
+      message: `Are you sure you want to approve ₹${item.amount} for user?`,
+      onConfirm: async () => {
+        try {
+          setProcessingId(item.$id);
+          // Since item.user_id stored internal id:
+          await walletService.approveDeposit(item.$id, item.user_id, item.amount);
+          Toast.show({ type: 'success', text1: 'Success', text2: 'Deposit approved.' });
+          fetchRequests();
+        } catch (error) {
+          Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to approve deposit.' });
+        } finally {
+          setProcessingId(null);
         }
-      ]
-    );
+      }
+    });
+    setModalVisible(true);
   };
 
   const handleRejectDeposit = async (item) => {
-    Alert.alert(
-      "Reject Deposit",
-      "Are you sure you want to reject this deposit request?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Reject", 
-          style: "destructive",
-          onPress: async () => {
-            try {
-              setProcessingId(item.$id);
-              await walletService.rejectDeposit(item.$id, "Rejected by admin");
-              Alert.alert("Success", "Deposit rejected.");
-              fetchRequests();
-            } catch (error) {
-              Alert.alert("Error", "Failed to reject deposit.");
-            } finally {
-              setProcessingId(null);
-            }
-          }
+    setModalConfig({
+      title: "Reject Deposit",
+      message: "Are you sure you want to reject this deposit request?",
+      onConfirm: async () => {
+        try {
+          setProcessingId(item.$id);
+          await walletService.rejectDeposit(item.$id, "Rejected by admin");
+          Toast.show({ type: 'success', text1: 'Success', text2: 'Deposit rejected.' });
+          fetchRequests();
+        } catch (error) {
+          Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to reject deposit.' });
+        } finally {
+          setProcessingId(null);
         }
-      ]
-    );
+      }
+    });
+    setModalVisible(true);
   };
 
   const handleApproveWithdrawal = async (item) => {
-    Alert.alert(
-      "Approve Withdrawal",
-      `Have you sent ₹${item.amount} to the user? Tap Approve to update their wallet balance.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Approve", 
-          style: "default",
-          onPress: async () => {
-            try {
-              setProcessingId(item.$id);
-              await walletService.approveWithdrawal(item.$id, item.user_id, item.amount);
-              Alert.alert("Success", "Withdrawal approved and balance updated.");
-              fetchRequests();
-            } catch (error) {
-              Alert.alert("Error", "Failed to approve withdrawal.");
-            } finally {
-              setProcessingId(null);
-            }
-          }
+    setModalConfig({
+      title: "Approve Withdrawal",
+      message: `Have you sent ₹${item.amount} to the user? Tap Approve to update their wallet balance.`,
+      onConfirm: async () => {
+        try {
+          setProcessingId(item.$id);
+          await walletService.approveWithdrawal(item.$id, item.user_id, item.amount);
+          Toast.show({ type: 'success', text1: 'Success', text2: 'Withdrawal approved and balance updated.' });
+          fetchRequests();
+        } catch (error) {
+          Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to approve withdrawal.' });
+        } finally {
+          setProcessingId(null);
         }
-      ]
-    );
+      }
+    });
+    setModalVisible(true);
   };
 
   const handleRejectWithdrawal = async (item) => {
-    Alert.alert(
-      "Reject Withdrawal",
-      "Are you sure you want to reject this withdrawal request? The amount will remain in their wallet.",
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Reject", 
-          style: "destructive",
-          onPress: async () => {
-            try {
-              setProcessingId(item.$id);
-              await walletService.rejectWithdrawal(item.$id, item.user_id, item.amount, "Rejected by admin");
-              Alert.alert("Success", "Withdrawal rejected.");
-              fetchRequests();
-            } catch (error) {
-              Alert.alert("Error", "Failed to reject withdrawal.");
-            } finally {
-              setProcessingId(null);
-            }
-          }
+    setModalConfig({
+      title: "Reject Withdrawal",
+      message: "Are you sure you want to reject this withdrawal request? The amount will remain in their wallet.",
+      onConfirm: async () => {
+        try {
+          setProcessingId(item.$id);
+          await walletService.rejectWithdrawal(item.$id, item.user_id, item.amount, "Rejected by admin");
+          Toast.show({ type: 'success', text1: 'Success', text2: 'Withdrawal rejected.' });
+          fetchRequests();
+        } catch (error) {
+          Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to reject withdrawal.' });
+        } finally {
+          setProcessingId(null);
         }
-      ]
-    );
+      }
+    });
+    setModalVisible(true);
   };
 
   const renderDepositItem = ({ item }) => (
@@ -278,6 +262,16 @@ export default function AdminWalletRequests() {
           )}
         </View>
       </Modal>
+      <ConfirmModal
+        visible={modalVisible}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        onConfirm={() => {
+          setModalVisible(false);
+          modalConfig.onConfirm();
+        }}
+        onCancel={() => setModalVisible(false)}
+      />
     </SafeAreaView>
   );
 }

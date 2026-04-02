@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, ActivityIndicator, Alert, ScrollView } from "react-native";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, ActivityIndicator, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
+import Toast from 'react-native-toast-message';
 import { useAuth } from "../../../context/authContext";
 import walletService from "../../../lib/appwrite/wallet";
 
@@ -34,15 +35,15 @@ export default function DepositScreen() {
 
   const handleDeposit = async () => {
     if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
-      Alert.alert("Error", "Please enter a valid amount.");
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Please enter a valid amount.' });
       return;
     }
     if (!transactionId.trim()) {
-      Alert.alert("Error", "Please enter the transaction ID.");
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Please enter the transaction ID.' });
       return;
     }
     if (!receiptImage) {
-      Alert.alert("Error", "Please upload a payment receipt screenshot.");
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Please upload a payment receipt screenshot.' });
       return;
     }
 
@@ -55,11 +56,10 @@ export default function DepositScreen() {
         receiptFile: receiptImage,
       });
 
-      Alert.alert("Success", "Deposit request submitted. Waiting for admin approval.", [
-        { text: "OK", onPress: () => router.push("/wallet") }
-      ]);
+      Toast.show({ type: 'success', text1: 'Success', text2: 'Deposit request submitted. Waiting for admin approval.' });
+      router.push("/wallet");
     } catch (error) {
-      Alert.alert("Error", error.message || "Failed to submit deposit request");
+      Toast.show({ type: 'error', text1: 'Error', text2: error.message || "Failed to submit deposit request" });
     } finally {
       setLoading(false);
     }

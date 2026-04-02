@@ -5,10 +5,11 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   ScrollView,
-  Alert,
   Modal,
   TextInput,
 } from "react-native";
+import Toast from "react-native-toast-message";
+import ConfirmModal from "../../components/ConfirmModal";
 import { useFocusEffect } from "expo-router";
 import { useEffect, useState,useCallback } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -22,7 +23,7 @@ import resultsService from "../../lib/appwrite/results";
 import participantService from "../../lib/appwrite/participants";
 
 
-const DATABASE_ID = "6992ce540025a687a83e";
+const DATABASE_ID = process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID;
 const PARTICIPANTS_COLLECTION_ID = "tournament_participants";
 const user_COLLECTION_ID = "users";
 
@@ -46,6 +47,7 @@ export default function TournamentDetails() {
 
   // Wallet Payment State
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showInsufficientModal, setShowInsufficientModal] = useState(false);
   const [gameId, setGameId] = useState("");
   const [joining, setJoining] = useState(false);
 
@@ -92,7 +94,7 @@ export default function TournamentDetails() {
       setTournament(response);
     } catch (error) {
       console.log(error);
-      Alert.alert("Error", "Failed to load tournament details");
+      Toast.show({ type: 'error', text1: "Error", text2: "Failed to load tournament details" });
     } finally {
       setLoading(false);
     }
@@ -129,19 +131,12 @@ export default function TournamentDetails() {
 
   const handleJoinPress = () => {
     if (!user || user.wallet_balance === undefined) {
-      Alert.alert("Error", "Unable to retrieve wallet balance. Please log in again.");
+      Toast.show({ type: 'error', text1: "Error", text2: "Unable to retrieve wallet balance. Please log in again." });
       return;
     }
     
     if (user.wallet_balance < tournament.enteryFee) {
-      Alert.alert(
-        "Insufficient Balance",
-        `You need ₹${tournament.enteryFee} to join, but your wallet balance is ₹${user.wallet_balance}. Please deposit funds.`,
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Deposit", onPress: () => router.push("/(tabs)/wallet") },
-        ]
-      );
+      setShowInsufficientModal(true);
       return;
     }
 
@@ -150,7 +145,7 @@ export default function TournamentDetails() {
 
   const confirmWalletJoin = async () => {
     if (!gameId.trim()) {
-      Alert.alert("Required", "Please enter your Game ID.");
+      Toast.show({ type: 'info', text1: "Required", text2: "Please enter your Game ID." });
       return;
     }
 
@@ -165,11 +160,11 @@ export default function TournamentDetails() {
       });
 
       setShowPaymentModal(false);
-      Alert.alert("Success", "You have successfully joined the tournament!");
+      Toast.show({ type: 'success', text1: "Success", text2: "You have successfully joined the tournament!" });
       
       checkIfJoined();
     } catch (error) {
-      Alert.alert("Error", error.message || "Failed to join tournament.");
+      Toast.show({ type: 'error', text1: "Error", text2: error.message || "Failed to join tournament." });
     } finally {
       setJoining(false);
     }
@@ -425,6 +420,18 @@ export default function TournamentDetails() {
           </View>
         </View>
       </Modal>
+
+      <ConfirmModal
+        visible={showInsufficientModal}
+        title="Insufficient Balance"
+        message={`You need ₹${tournament?.enteryFee} to join, but your wallet balance is ₹${user?.wallet_balance || 0}. Please deposit funds.`}
+        confirmText="Deposit"
+        onConfirm={() => {
+          setShowInsufficientModal(false);
+          router.push("/(tabs)/wallet");
+        }}
+        onCancel={() => setShowInsufficientModal(false)}
+      />
     </SafeAreaView>
   );
 }

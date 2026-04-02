@@ -8,9 +8,9 @@ import {
   TouchableOpacity,
   Modal,
   TextInput,
-  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from 'react-native-toast-message';
 import supportService from "../../../lib/appwrite/support";
 
 export default function AdminSupportTickets() {
@@ -66,7 +66,7 @@ export default function AdminSupportTickets() {
 
   const handleReplySubmit = async () => {
     if (!replyText.trim()) {
-      Alert.alert("Error", "Reply cannot be empty.");
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Reply cannot be empty.' });
       return;
     }
     
@@ -81,7 +81,7 @@ export default function AdminSupportTickets() {
       fetchMessages(selectedTicket.$id); // Refresh chat
       fetchTickets(); // Refresh list to update status/last message
     } catch (error) {
-      Alert.alert("Error", "Failed to send reply.");
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to send reply.' });
     } finally {
       setIsReplying(false);
     }

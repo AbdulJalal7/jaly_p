@@ -5,10 +5,10 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   ScrollView,
   Image,
 } from "react-native";
+import Toast from "react-native-toast-message";
 import { useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
@@ -33,10 +33,11 @@ export default function JoinTournament() {
       await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (status !== "granted") {
-      Alert.alert(
-        "Permission Required",
-        "Please allow gallery access to upload receipt."
-      );
+      Toast.show({
+        type: 'error',
+        text1: "Permission Required",
+        text2: "Please allow gallery access to upload receipt."
+      });
       return;
     }
 
@@ -56,9 +57,8 @@ export default function JoinTournament() {
     const selectedImage = result.assets[0];
     // console.log("Selected image:", selectedImage);
 
-    // Optional: basic validation
     if (!selectedImage?.uri) {
-      Alert.alert("Error", "Failed to select image.");
+      Toast.show({ type: 'error', text1: "Error", text2: "Failed to select image." });
       return;
     }
 
@@ -67,13 +67,13 @@ export default function JoinTournament() {
 
   } catch (error) {
     console.log("Image Picker Error:", error);
-    Alert.alert("Error", "Something went wrong while picking image.");
+    Toast.show({ type: 'error', text1: "Error", text2: "Something went wrong while picking image." });
   }
 };
 
   const handleSubmit = async () => {
   if (!gameId || !transactionId || !receipt) {
-    Alert.alert("Error", "All fields are required");
+    Toast.show({ type: 'error', text1: "Error", text2: "All fields are required" });
     return;
   }
 
@@ -95,7 +95,7 @@ export default function JoinTournament() {
 
   } catch (error) {
     console.log(error);
-    Alert.alert("Error", "Failed to join tournament");
+    Toast.show({ type: 'error', text1: "Error", text2: "Failed to join tournament" });
   } finally {
     setLoading(false);
   }

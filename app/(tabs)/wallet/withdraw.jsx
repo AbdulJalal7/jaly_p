@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from "react-native";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import Toast from 'react-native-toast-message';
 import { useAuth } from "../../../context/authContext";
 import walletService from "../../../lib/appwrite/wallet";
 
@@ -36,22 +37,22 @@ export default function WithdrawScreen() {
 
   const handleWithdraw = async () => {
     if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
-      Alert.alert("Error", "Please enter a valid amount.");
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Please enter a valid amount.' });
       return;
     }
     
     if (parseFloat(amount) > balance) {
-      Alert.alert("Error", "Insufficient balance.");
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Insufficient balance.' });
       return;
     }
 
     if (method === "UPI" && !upiId.trim()) {
-      Alert.alert("Error", "Please enter your UPI ID.");
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Please enter your UPI ID.' });
       return;
     }
 
     if (method === "bank" && (!accountNumber.trim() || !accountName.trim())) {
-      Alert.alert("Error", "Please fill in all bank details.");
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Please fill in all bank details.' });
       return;
     }
 
@@ -66,11 +67,10 @@ export default function WithdrawScreen() {
         accountName: method === "bank" ? accountName : null,
       });
 
-      Alert.alert("Success", "Withdrawal request submitted. Waiting for admin approval.", [
-        { text: "OK", onPress: () => router.push("/wallet") }
-      ]);
+      Toast.show({ type: 'success', text1: 'Success', text2: 'Withdrawal request submitted. Waiting for admin approval.' });
+      router.push("/wallet");
     } catch (error) {
-      Alert.alert("Error", error.message || "Failed to submit withdrawal request");
+      Toast.show({ type: 'error', text1: 'Error', text2: error.message || "Failed to submit withdrawal request" });
     } finally {
       setLoading(false);
     }

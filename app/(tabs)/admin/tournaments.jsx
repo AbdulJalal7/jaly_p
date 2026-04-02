@@ -6,10 +6,10 @@ import {
   StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
-  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import Toast from 'react-native-toast-message';
 import tournamentService from "../../../lib/appwrite/database";
 
 export default function AdminTournaments() {
@@ -26,7 +26,7 @@ export default function AdminTournaments() {
       setTournaments(completed);
     } catch (error) {
       console.error("Error fetching tournaments:", error);
-      Alert.alert("Error", "Failed to fetch tournaments.");
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to fetch tournaments.' });
     } finally {
       setLoading(false);
     }

@@ -1,9 +1,10 @@
-import { StyleSheet, Text, View,KeyboardAvoidingView,Platform,Alert } from 'react-native';
+import { StyleSheet, Text, View,KeyboardAvoidingView,Platform } from 'react-native';
 import { useState } from 'react';
 import { TextInput } from 'react-native';
 import { useRouter } from "expo-router";
 import colors from '../config/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 
 import { useAuth } from "../../context/authContext";
 import { OAuthProvider } from "react-native-appwrite";
@@ -21,17 +22,24 @@ const Login = () => {
       await login(email, password);
       router.replace("/(tabs)/home");
     } catch (error) {
-      Alert.alert("Login failed", error.message);
+      Toast.show({
+        type: 'error',
+        text1: 'Login failed',
+        text2: error.message
+      });
     }
   };
 
   const onHandleGoogleLogin = async () => {
     try {
       await authService.loginWithOAuth(OAuthProvider.Google);
-      // Depending on authContext, you might need to sync state here too
       router.replace("/(tabs)/home");
     } catch (error) {
-      Alert.alert("Google Login failed", error.message);
+       Toast.show({
+        type: 'error',
+        text1: 'Google Login failed',
+        text2: error.message
+      });
     }
   };
 

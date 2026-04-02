@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator, Alert } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator } from "react-native";
 import { Databases, Query } from "react-native-appwrite";
+import Toast from 'react-native-toast-message';
+import ConfirmModal from '../../../components/ConfirmModal';
 import client from "../../../lib/appwrite/client";
 import challengeService from "../../../lib/appwrite/challenges";
 
-const DATABASE_ID = "6992ce540025a687a83e";
+const DATABASE_ID = process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID;
 const CHALLENGES_COLLECTION_ID = "challenges";
 const databases = new Databases(client);
 
@@ -15,6 +17,12 @@ export default function AdminChallengesScreen() {
 
   // Form states per challenge
   const [roomInputs, setRoomInputs] = useState({});
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalConfig, setModalConfig] = useState({
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   useEffect(() => {
     loadChallenges();
@@ -30,7 +38,7 @@ export default function AdminChallengesScreen() {
       ]);
       setChallenges(resp.documents);
     } catch (error) {
-      Alert.alert("Error", "Could not load admin challenges.");
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Could not load admin challenges.' });
     } finally {
       setLoading(false);
     }
@@ -49,19 +57,21 @@ export default function AdminChallengesScreen() {
   const handleAssignRoom = async (challengeId) => {
     const inputs = roomInputs[challengeId] || {};
     if (!inputs.roomId || !inputs.roomPass) {
-      return Alert.alert("Validation", "Both Room ID and Password are required.");
+      return Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Both Room ID and Password are required.' });
     }
 
-    Alert.alert("Confirm", "Assign these room details to the match?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Assign", onPress: async () => {
-          try {
-            await challengeService.setRoomDetailsAdmin(challengeId, inputs.roomId, inputs.roomPass);
-            Alert.alert("Success", "Room details assigned! Players can now see them.");
-            loadChallenges();
-          } catch(e) { Alert.alert("Error", e.message); }
-      }}
-    ]);
+    setModalConfig({
+      title: "Confirm Assignment",
+      message: "Assign these room details to the match?",
+      onConfirm: async () => {
+        try {
+          await challengeService.setRoomDetailsAdmin(challengeId, inputs.roomId, inputs.roomPass);
+          Toast.show({ type: 'success', text1: 'Success', text2: 'Room details assigned! Players can now see them.' });
+          loadChallenges();
+        } catch(e) { Toast.show({ type: 'error', text1: 'Error', text2: e.message }); }
+      }
+    });
+    setModalVisible(true);
   };
 
   // 2. Complete Match (Payout)
@@ -69,25 +79,23 @@ export default function AdminChallengesScreen() {
     const winnerId = getUserId(winnerRel);
     const loserId = getUserId(loserRel);
 
-    Alert.alert(
-      "Confirm Winner", 
-      `Are you absolutely sure ${getUserName(winnerRel)} won?\n\nThey will receive the ₹${challenge.prize} prize instantly.`, 
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Confirm", onPress: async () => {
-            try {
-              await challengeService.completeChallengeAdmin({
-                challengeId: challenge.$id,
-                winnerId,
-                loserId,
-                prize: challenge.prize
-              });
-              Alert.alert("Payout Successful", "Match completed, stats recorded, and prize money credited!");
-              loadChallenges();
-            } catch(e) { Alert.alert("Error", e.message); }
-        }}
-      ]
-    );
+    setModalConfig({
+      title: "Confirm Winner",
+      message: `Are you absolutely sure ${getUserName(winnerRel)} won?\n\nThey will receive the ₹${challenge.prize} prize instantly.`,
+      onConfirm: async () => {
+        try {
+          await challengeService.completeChallengeAdmin({
+            challengeId: challenge.$id,
+            winnerId,
+            loserId,
+            prize: challenge.prize
+          });
+          Toast.show({ type: 'success', text1: 'Payout Successful', text2: 'Match completed, stats recorded, and prize money credited!' });
+          loadChallenges();
+        } catch(e) { Toast.show({ type: 'error', text1: 'Error', text2: e.message }); }
+      }
+    });
+    setModalVisible(true);
   };
 
   const renderItem = ({ item }) => {
@@ -180,6 +188,16 @@ export default function AdminChallengesScreen() {
           renderItem={renderItem}
         />
       )}
+      <ConfirmModal
+        visible={modalVisible}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        onConfirm={() => {
+          setModalVisible(false);
+          modalConfig.onConfirm();
+        }}
+        onCancel={() => setModalVisible(false)}
+      />
     </View>
   );
 }

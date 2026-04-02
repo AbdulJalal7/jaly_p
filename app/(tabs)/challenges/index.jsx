@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { Databases, Query } from "react-native-appwrite";
+import Toast from 'react-native-toast-message';
 import client from "../../../lib/appwrite/client";
 import { useAuth } from "../../../context/authContext";
 import { useChat } from "../../../hooks/useChat";
@@ -65,7 +66,7 @@ export default function ChallengesScreen() {
         params: { targetUserId: opponent.$id }
       });
     } else {
-      Alert.alert("Error", "Could not create or open chat.");
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Could not create or open chat.' });
     }
   };
 

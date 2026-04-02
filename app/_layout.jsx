@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "../context/authContext";
 import { View, ActivityIndicator } from "react-native";
+import Toast from "react-native-toast-message";
 
 function RootNavigation() {
   const { user, loading } = useAuth();
@@ -20,8 +21,8 @@ function RootNavigation() {
       return;
     }
 
-    // 🔒 Logged in → block auth screens
-    if (user && inAuthGroup) {
+    // 🔒 Logged in → redirect to home if in auth screens or at the root index
+    if (user && (inAuthGroup || segments.length === 0 || segments[0] === "index")) {
       router.replace("/(tabs)/home");
       return;
     }
@@ -51,6 +52,7 @@ export default function RootLayout() {
       <AuthProvider>
         <RootNavigation />
       </AuthProvider>
+      <Toast />
     </SafeAreaProvider>
   );
 }

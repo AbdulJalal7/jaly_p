@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import Toast from 'react-native-toast-message';
+import ConfirmModal from '../../../components/ConfirmModal';
 import { useAuth } from "../../../context/authContext";
 import challengeService from "../../../lib/appwrite/challenges";
 
@@ -13,6 +15,12 @@ export default function CreateChallengeScreen() {
   const [map, setMap] = useState("Erangel");
   const [fee, setFee] = useState("100");
   const [loading, setLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalConfig, setModalConfig] = useState({
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   // Safeguard numbers
   const parsedFee = parseInt(fee, 10) || 0;
@@ -20,20 +28,19 @@ export default function CreateChallengeScreen() {
 
   const handleSend = async () => {
     if (parsedFee < 100) {
-      return Alert.alert("Error", "Minimum entry fee is 100.");
+      return Toast.show({ type: 'error', text1: 'Error', text2: 'Minimum entry fee is 100.' });
     }
     if (user.wallet_balance < parsedFee) {
-      return Alert.alert(
-        "Insufficient Balance", 
-        "You do not have enough funds to send this challenge. Please deposit in your Wallet.",
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Deposit", onPress: () => router.push("/wallet/deposit") }
-        ]
-      );
+      setModalConfig({
+        title: "Insufficient Balance",
+        message: "You do not have enough funds to send this challenge. Please deposit in your Wallet.",
+        onConfirm: () => router.push("/wallet/deposit")
+      });
+      setModalVisible(true);
+      return;
     }
     if (!game.trim()) {
-      return Alert.alert("Error", "Please specify a game.");
+      return Toast.show({ type: 'error', text1: 'Error', text2: 'Please specify a game.' });
     }
 
     setLoading(true);
@@ -47,11 +54,10 @@ export default function CreateChallengeScreen() {
         currentBalance: user.wallet_balance
       });
 
-      Alert.alert("Success", "Challenge sent securely!", [
-        { text: "View My Challenges", onPress: () => router.replace("/challenges/my_challenges") }
-      ]);
+      Toast.show({ type: 'success', text1: 'Success', text2: 'Challenge sent securely!' });
+      router.replace("/challenges/my_challenges");
     } catch (error) {
-      Alert.alert("Failed", error.message || "Could not send challenge.");
+      Toast.show({ type: 'error', text1: 'Failed', text2: error.message || "Could not send challenge." });
     } finally {
       setLoading(false);
     }
@@ -109,6 +115,17 @@ export default function CreateChallengeScreen() {
       <TouchableOpacity style={styles.cancelBtn} onPress={() => router.back()}>
         <Text style={styles.cancelText}>Cancel</Text>
       </TouchableOpacity>
+
+      <ConfirmModal
+        visible={modalVisible}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        onConfirm={() => {
+          setModalVisible(false);
+          modalConfig.onConfirm();
+        }}
+        onCancel={() => setModalVisible(false)}
+      />
     </View>
   );
 }

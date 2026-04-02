@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
+import Toast from 'react-native-toast-message';
+import ConfirmModal from '../../../components/ConfirmModal';
 import { useAuth } from "../../../context/authContext";
 import challengeService from "../../../lib/appwrite/challenges";
 
@@ -8,6 +10,12 @@ export default function MyChallengesScreen() {
   const [challenges, setChallenges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("pending");
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalConfig, setModalConfig] = useState({
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   useEffect(() => {
     loadChallenges();
@@ -47,61 +55,68 @@ export default function MyChallengesScreen() {
 
   // 🔴 ACTIONS
   const handleCancel = async (c) => {
-    Alert.alert("Cancel Challenge", "You will be refunded immediately.", [
-      { text: "No", style: "cancel" },
-      { text: "Yes", onPress: async () => {
-          try {
-            await challengeService.cancelOrRejectChallenge({
-              challengeId: c.$id,
-              refundUserId: user.$id,
-              entryFee: c.entry_fee,
-              newStatus: "cancelled"
-            });
-            Alert.alert("Success", "Challenge cancelled and currency refunded.");
-            loadChallenges();
-          } catch(e) { Alert.alert("Error", e.message); }
-      }}
-    ]);
+    setModalConfig({
+      title: "Cancel Challenge",
+      message: "You will be refunded immediately.",
+      onConfirm: async () => {
+        try {
+          await challengeService.cancelOrRejectChallenge({
+            challengeId: c.$id,
+            refundUserId: user.$id,
+            entryFee: c.entry_fee,
+            newStatus: "cancelled"
+          });
+          Toast.show({ type: 'success', text1: 'Success', text2: 'Challenge cancelled and currency refunded.' });
+          loadChallenges();
+        } catch(e) { Toast.show({ type: 'error', text1: 'Error', text2: e.message }); }
+      }
+    });
+    setModalVisible(true);
   };
 
   const handleAccept = async (c) => {
     if (user.wallet_balance < c.entry_fee) {
-      return Alert.alert("Insufficient Funds", "Wallet balance must be greater than " + c.entry_fee);
+      return Toast.show({ type: 'error', text1: 'Insufficient Funds', text2: 'Wallet balance must be greater than ' + c.entry_fee });
     }
-    Alert.alert("Accept Challenge", `₹${c.entry_fee} will be deducted from your wallet to join.`, [
-      { text: "Cancel", style: "cancel" },
-      { text: "Accept", onPress: async () => {
-          try {
-            await challengeService.acceptChallenge({
-              challengeId: c.$id,
-              opponentId: user.$id,
-              entryFee: c.entry_fee,
-              currentBalance: user.wallet_balance
-            });
-            Alert.alert("Success", "Challenge accepted!");
-            loadChallenges();
-          } catch(e) { Alert.alert("Error", e.message); }
-      }}
-    ]);
+    
+    setModalConfig({
+      title: "Accept Challenge",
+      message: `₹${c.entry_fee} will be deducted from your wallet to join.`,
+      onConfirm: async () => {
+        try {
+          await challengeService.acceptChallenge({
+            challengeId: c.$id,
+            opponentId: user.$id,
+            entryFee: c.entry_fee,
+            currentBalance: user.wallet_balance
+          });
+          Toast.show({ type: 'success', text1: 'Success', text2: 'Challenge accepted!' });
+          loadChallenges();
+        } catch(e) { Toast.show({ type: 'error', text1: 'Error', text2: e.message }); }
+      }
+    });
+    setModalVisible(true);
   };
 
   const handleReject = async (c) => {
-    Alert.alert("Reject Challenge", "Are you sure?", [
-      { text: "No", style: "cancel" },
-      { text: "Yes", onPress: async () => {
-          try {
-            const challengerStr = typeof c.challenger_id === 'object' ? c.challenger_id.$id : c.challenger_id;
-            await challengeService.cancelOrRejectChallenge({
-              challengeId: c.$id,
-              refundUserId: challengerStr,
-              entryFee: c.entry_fee,
-              newStatus: "rejected"
-            });
-            Alert.alert("Success", "Challenge rejected. Funds refunded to challenger.");
-            loadChallenges();
-          } catch(e) { Alert.alert("Error", e.message); }
-      }}
-    ]);
+    setModalConfig({
+      title: "Reject Challenge",
+      message: "Are you sure?",
+      onConfirm: async () => {
+        try {
+          const challengerStr = typeof c.challenger_id === 'object' ? c.challenger_id.$id : c.challenger_id;
+          await challengeService.cancelOrRejectChallenge({
+            challengeId: c.$id,
+            refundUserId: challengerStr,
+            entryFee: c.entry_fee,
+            newStatus: "rejected"
+          });
+          Toast.show({ type: 'success', text1: 'Success', text2: 'Challenge rejected. Funds refunded to challenger.' });
+          loadChallenges();
+        } catch(e) { Toast.show({ type: 'error', text1: 'Error', text2: e.message }); }
+      }
+    });
+    setModalVisible(true);
   };
 
   const renderItem = ({ item }) => {
@@ -186,6 +201,16 @@ export default function MyChallengesScreen() {
           renderItem={renderItem}
         />
       )}
+      <ConfirmModal
+        visible={modalVisible}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        onConfirm={() => {
+          setModalVisible(false);
+          modalConfig.onConfirm();
+        }}
+        onCancel={() => setModalVisible(false)}
+      />
     </View>
   );
 }

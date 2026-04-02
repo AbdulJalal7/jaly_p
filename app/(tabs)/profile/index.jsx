@@ -1,9 +1,10 @@
-import { View, Text, Button, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
+import { View, Text, Button, TouchableOpacity, ActivityIndicator } from "react-native";
 import { useAuth } from "../../../context/authContext";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import supportService from "../../../lib/appwrite/support";
 import { useState } from "react";
+import Toast from 'react-native-toast-message';
 
 export default function Profile() {
   const { logout, user } = useAuth();
@@ -23,7 +24,7 @@ export default function Profile() {
       router.push(`/(support)/${ticket.$id}`);
     } catch (error) {
       console.error("Support navigation failed:", error);
-      Alert.alert("Error", "Could not open support. Please try again later.");
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Could not open support. Please try again later.' });
     } finally {
       setLoadingSupport(false);
     }

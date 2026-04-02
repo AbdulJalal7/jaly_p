@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View,Platform,ScrollView ,KeyboardAvoidingView,Alert} from 'react-native';
+import { StyleSheet, Text, View,Platform,ScrollView ,KeyboardAvoidingView} from 'react-native';
 import React, { useState } from 'react';
 import { TextInput } from 'react-native';
 import colors from '../config/colors';
@@ -6,6 +6,7 @@ import colors from '../config/colors';
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../context/authContext";
+import Toast from 'react-native-toast-message';
 
 const Register = () => {
     const router = useRouter();
@@ -28,7 +29,11 @@ const Register = () => {
       router.replace("/(tabs)/home");
     } catch (error) {
       console.error("Signup error:", error);
-      Alert.alert("Signup failed", error.message);
+      Toast.show({
+        type: 'error',
+        text1: 'Signup failed',
+        text2: error.message
+      });
     }
     };
 

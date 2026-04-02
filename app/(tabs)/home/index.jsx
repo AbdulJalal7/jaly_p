@@ -6,10 +6,10 @@ import {
   ActivityIndicator,
   RefreshControl,
   TouchableOpacity,
-  Alert,
 } from "react-native";
 import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
+import Toast from 'react-native-toast-message';
 import tournamentService from "../../../lib/appwrite/database";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -31,7 +31,7 @@ export default function Home() {
       setTournaments(response.documents);
     } catch (error) {
       console.log(error);
-      Alert.alert("Error", "Failed to load tournaments");
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to load tournaments' });
     } finally {
       setLoading(false);
       setRefreshing(false);
