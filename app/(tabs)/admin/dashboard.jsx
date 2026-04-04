@@ -27,6 +27,11 @@ const ADMIN_SECTIONS = [
     description: "Publish tournament results and prize payouts",
     route: "/admin/publish_results",
   },
+  {
+    title: "👥 Team Results",
+    description: "Verify screenshots and declare team winners",
+    route: "/admin/team_challenges",
+  },
 ];
 
 export default function AdminDashboard() {

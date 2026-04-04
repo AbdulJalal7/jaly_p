@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, TextInput, Modal, Alert as RNAlert } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, TextInput, Modal, Alert as RNAlert, Image, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState, useCallback } from "react";
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
@@ -7,6 +7,8 @@ import challengesApi from "../../../lib/appwrite/challengesApi";
 import { Ionicons } from "@expo/vector-icons";
 import Alert from "react-native-toast-message";
 
+import * as ImagePicker from "expo-image-picker";
+
 export default function ChallengeDetail() {
   const { id } = useLocalSearchParams();
   const { user } = useAuth();
@@ -14,6 +16,7 @@ export default function ChallengeDetail() {
 
   const [challenge, setChallenge] = useState(null);
   const [participants, setParticipants] = useState([]);
+  const [matchResults, setMatchResults] = useState([]);
   const [loading, setLoading] = useState(true);
   
   // Modals / Inputs
@@ -23,7 +26,7 @@ export default function ChallengeDetail() {
   const [submittingRoom, setSubmittingRoom] = useState(false);
 
   const [uploadModalVisible, setUploadModalVisible] = useState(false);
-  const [screenshotUrl, setScreenshotUrl] = useState(""); // Simplified: just a URL string for now instead of complex file picker
+  const [pickedImage, setPickedImage] = useState(null);
   const [submittingResult, setSubmittingResult] = useState(false);
 
   const fetchDetails = async () => {
@@ -32,6 +35,10 @@ export default function ChallengeDetail() {
       setChallenge(chal);
       const parts = await challengesApi.getParticipants(id);
       setParticipants(parts.documents);
+      
+      const results = await challengesApi.getMatchResults(id);
+      console.log("Match Resultssssssssssssss : ", results);
+      setMatchResults(results.documents);
     } catch (error) {
       console.error(error);
       Alert.show({ type: "error", text1: "Error loading details" });
@@ -50,6 +57,13 @@ export default function ChallengeDetail() {
   const isParticipant = participants.some(p => p.user_id === user?.$id);
   const myParticipantRecord = participants.find(p => p.user_id === user?.$id);
   const isSelected = isCreator || myParticipantRecord?.status === "selected";
+
+  // Single Record Logic
+  const mainResultDoc = matchResults && matchResults.length > 0 ? matchResults[0] : null;
+  const challengerResultUrl = mainResultDoc?.challenger_screenshot;
+  const opponentResultUrl = mainResultDoc?.opponent_screenshot;
+  
+  const hasUploaded = isCreator ? !!challengerResultUrl : !!opponentResultUrl;
 
   const handleSelectOpponent = async (participant) => {
     RNAlert.alert(
@@ -92,17 +106,49 @@ export default function ChallengeDetail() {
     }
   };
 
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setPickedImage(result.assets[0]);
+    }
+  };
+
   const handleSubmitResult = async () => {
-    if (!screenshotUrl) return Alert.show({ type: "error", text1: "Provide a link/url" });
+    if (!pickedImage) return Alert.show({ type: "error", text1: "Select an image first" });
     
     setSubmittingResult(true);
     try {
-      await challengesApi.uploadMatchResult(challenge.$id, user.$id, screenshotUrl.trim());
-      Alert.show({ type: "success", text1: "Result Uploaded" });
+      // Prepare file for Appwrite (Ensure URI is correct for React Native)
+      let uri = pickedImage.uri;
+      if (Platform.OS !== "web" && !uri.startsWith("file://") && !uri.startsWith("content://")) {
+        uri = `file://${uri}`;
+      }
+
+      const fileObj = {
+        name: pickedImage.fileName || `result_${Date.now()}.jpg`,
+        type: pickedImage.mimeType || "image/jpeg",
+        uri: uri,
+        size: pickedImage.fileSize || 0
+      };
+
+      // Upload to Storage
+      const { fileUrl } = await challengesApi.uploadResultFile(fileObj);
+
+      // Save to Results Collection
+      await challengesApi.uploadMatchResult(challenge.$id, user.$id, fileUrl);
+      
+      Alert.show({ type: "success", text1: "Result Uploaded Successfully" });
       setUploadModalVisible(false);
-      // Let's assume uploading changes status to completed for simplicity or admin does it. 
+      setPickedImage(null);
+      fetchDetails(); // Refresh to show we've uploaded
     } catch (error) {
-      Alert.show({ type: "error", text1: "Upload Failed" });
+      console.error(error);
+      Alert.show({ type: "error", text1: "Upload Failed", text2: error.message });
     } finally {
       setSubmittingResult(false);
     }
@@ -140,7 +186,7 @@ export default function ChallengeDetail() {
         <View style={styles.card}>
           <Text style={styles.gameTitle}>{challenge.game_name}</Text>
           <Text style={styles.metadata}>Mode: {challenge.mode.toUpperCase()} | Map: {challenge.map}</Text>
-          <Text style={styles.price}>Prize Pool: ₹{challenge.challenge_price * 2}</Text>
+          <Text style={styles.price}>Prize Pool: ₹{challenge.prize_pool || (challenge.challenge_price * 1.8)}</Text>
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{challenge.status.toUpperCase()}</Text>
           </View>
@@ -164,6 +210,77 @@ export default function ChallengeDetail() {
                 <Text style={styles.actionBtnText}>{challenge.room_id ? "Edit Room Details" : "Set Room Details"}</Text>
               </TouchableOpacity>
             )}
+          </View>
+        )}
+
+        {/* Verification Status (Only when ongoing or completed) */}
+        {(challenge.status === "ongoing" || challenge.status === "completed") && isSelected && (
+          <View style={styles.verificationCard}>
+            <Text style={styles.sectionTitle}>Verification Status</Text>
+            
+            <View style={styles.verificationRow}>
+               <View style={styles.verifyItem}>
+                  <Ionicons 
+                    name={challengerResultUrl ? "checkmark-circle" : "ellipse-outline"} 
+                    size={22} 
+                    color={challengerResultUrl ? "#00FF66" : "#444"} 
+                  />
+                  <Text style={[styles.verifyText, { color: challengerResultUrl ? "#00FF66" : "#888" }]}>Challenger Proof</Text>
+               </View>
+               <View style={styles.verifyItem}>
+                  <Ionicons 
+                    name={opponentResultUrl ? "checkmark-circle" : "ellipse-outline"} 
+                    size={22} 
+                    color={opponentResultUrl ? "#00FF66" : "#444"} 
+                  />
+                  <Text style={[styles.verifyText, { color: opponentResultUrl ? "#00FF66" : "#888" }]}>Opponent Proof</Text>
+               </View>
+            </View>
+            
+            {challenge.status === "ongoing" && challengerResultUrl && opponentResultUrl && (
+               <View style={styles.pendingReview}>
+                  <Ionicons name="time-outline" size={18} color="#FFD700" />
+                  <Text style={styles.pendingReviewText}>Waiting for Admin Announcement...</Text>
+               </View>
+            )}
+
+            {challenge.status === "completed" && (
+                <View style={[styles.pendingReview, { backgroundColor: '#FFD70015', borderColor: '#FFD70030' }]}>
+                   <Ionicons name="trophy" size={20} color="#FFD700" />
+                   <Text style={[styles.pendingReviewText, { color: '#FFD700' }]}>
+                      Winner: {challenge.winner_id === (challenge.creator_id?.$id || challenge.creator_id) ? "Challenger" : "Opponent"}
+                   </Text>
+                   {challenge.winner_id === user.$id && (
+                     <Text style={{ color: '#00FF66', fontSize: 12, fontWeight: 'bold', marginLeft: 10 }}>🎉 YOU WON!</Text>
+                   )}
+                </View>
+             )}
+
+            {/* Screenshots Display */}
+            <View style={styles.resultsGrid}>
+              {challengerResultUrl ? (
+                <View style={styles.resultDisplay}>
+                  <Text style={styles.resultLabel}>Challenger Proof</Text>
+                  <Image 
+                    key="challenger-proof"
+                    source={{ uri: challengerResultUrl }} 
+                    style={styles.resultImage}
+                    resizeMode="contain"
+                  />
+                </View>
+              ) : null}
+              {opponentResultUrl ? (
+                <View style={styles.resultDisplay}>
+                  <Text style={styles.resultLabel}>Opponent Proof</Text>
+                  <Image 
+                    key="opponent-proof"
+                    source={{ uri: opponentResultUrl }} 
+                    style={styles.resultImage}
+                    resizeMode="contain"
+                  />
+                </View>
+              ) : null}
+            </View>
           </View>
         )}
 
@@ -193,8 +310,14 @@ export default function ChallengeDetail() {
 
         {/* Match Result Upload (For selected players & creator when ongoing) */}
         {challenge.status === "ongoing" && isSelected && (
-          <TouchableOpacity style={[styles.actionBtn, { marginTop: 30, backgroundColor: "#00FF66" }]} onPress={() => setUploadModalVisible(true)}>
-             <Text style={[styles.actionBtnText, { color: "#000" }]}>Upload Match Result</Text>
+          <TouchableOpacity 
+             style={[styles.actionBtn, { marginTop: 30, backgroundColor: hasUploaded ? "#333" : "#00FF66" }]} 
+             onPress={() => !hasUploaded && setUploadModalVisible(true)}
+             disabled={hasUploaded}
+          >
+             <Text style={[styles.actionBtnText, { color: hasUploaded ? "#888" : "#000" }]}>
+                {hasUploaded ? "Wait for Result" : "Upload Match Result"}
+             </Text>
           </TouchableOpacity>
         )}
 
@@ -217,16 +340,32 @@ export default function ChallengeDetail() {
         </View>
       </Modal>
 
-      {/* Upload Modal (Simplified to URL for now) */}
+      {/* Upload Modal */}
       <Modal visible={uploadModalVisible} transparent animationType="fade">
         <View style={styles.modalBg}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Upload Result</Text>
-            <Text style={styles.hintText}>Provide a link to your screenshot/recording:</Text>
-            <TextInput style={styles.input} placeholder="https://imgur.com/..." placeholderTextColor="#888" value={screenshotUrl} onChangeText={setScreenshotUrl} />
+            <Text style={styles.hintText}>Select a screenshot of your match result:</Text>
+            
+            <TouchableOpacity style={styles.imagePickerBtn} onPress={pickImage}>
+              <Ionicons name="image-outline" size={24} color="#FFF" />
+              <Text style={styles.imagePickerBtnText}>
+                {pickedImage ? "Change Image" : "Select Image"}
+              </Text>
+            </TouchableOpacity>
+
+            {pickedImage && (
+              <View style={styles.previewContainer}>
+                <Image source={{ uri: pickedImage.uri }} style={styles.imagePreview} />
+                <TouchableOpacity style={styles.removeImage} onPress={() => setPickedImage(null)}>
+                  <Ionicons name="close-circle" size={24} color="#FF3366" />
+                </TouchableOpacity>
+              </View>
+            )}
+
             <View style={styles.modalActions}>
               <TouchableOpacity style={[styles.modalBtn, { backgroundColor: "#333" }]} onPress={() => setUploadModalVisible(false)}><Text style={styles.modalBtnText}>Cancel</Text></TouchableOpacity>
-              <TouchableOpacity style={[styles.modalBtn, { backgroundColor: "#00FF66" }]} onPress={handleSubmitResult} disabled={submittingResult}>
+              <TouchableOpacity style={[styles.modalBtn, { backgroundColor: "#00FF66" }]} onPress={handleSubmitResult} disabled={submittingResult || !pickedImage}>
                 <Text style={[styles.modalBtnText, { color: '#000' }]}>{submittingResult ? "..." : "Submit"}</Text>
               </TouchableOpacity>
             </View>
@@ -270,4 +409,22 @@ const styles = StyleSheet.create({
   modalActions: { flexDirection: "row", justifyContent: "flex-end", gap: 12, marginTop: 8 },
   modalBtn: { paddingHorizontal: 20, paddingVertical: 12, borderRadius: 8 },
   modalBtnText: { color: "#FFF", fontWeight: "bold" },
+  
+  imagePickerBtn: { backgroundColor: "#121212", borderStyle: 'dotted', borderWidth: 1, borderColor: '#444', borderRadius: 8, padding: 20, alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 16 },
+  imagePickerBtnText: { color: '#AAA', fontSize: 14, fontWeight: '600' },
+  previewContainer: { position: 'relative', marginBottom: 16, borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: '#333' },
+  imagePreview: { width: '100%', height: 200, resizeMode: 'cover' },
+  removeImage: { position: 'absolute', top: 8, right: 8, backgroundColor: '#00000080', borderRadius: 12 },
+
+  verificationCard: { backgroundColor: "#121212", borderRadius: 12, padding: 16, marginTop: 20, borderWidth: 1, borderColor: '#222' },
+  verificationRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
+  verifyItem: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  verifyText: { fontSize: 13, fontWeight: '500' },
+  pendingReview: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 16, backgroundColor: '#FFD70015', padding: 10, borderRadius: 8 },
+  pendingReviewText: { color: '#FFD700', fontSize: 12, fontWeight: '600' },
+  
+  resultsGrid: { marginTop: 16, gap: 16 },
+  resultDisplay: { gap: 8 },
+  resultLabel: { color: '#888', fontSize: 12, fontWeight: '600' },
+  resultImage: { width: '100%', height: 200, borderRadius: 8, backgroundColor: '#121212' },
 });

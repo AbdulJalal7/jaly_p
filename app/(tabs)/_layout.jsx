@@ -73,6 +73,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="admin/wallet_requests" options={{ title: "Wallet Requests", href: null }} />
       <Tabs.Screen name="admin/publish_results" options={{ title: "Publish Results", href: null }} />
       <Tabs.Screen name="admin/challenges" options={{ title: "1v1 Admin", href: null }} />
+      <Tabs.Screen name="admin/team_challenges" options={{ title: "Team Admin", href: null }} />
     </Tabs>
   );
 }
