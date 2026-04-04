@@ -199,7 +199,7 @@ export default function TournamentDetails() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#121212" }}>
       {/* Top Toggle Nav (Visible only if tournament is completed) */}
       {tournament.status === "completed" && (
         <View style={styles.tabContainer}>

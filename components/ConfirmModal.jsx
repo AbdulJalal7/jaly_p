@@ -1,6 +1,6 @@
 import React from "react";
 import { Modal, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
-import { BlurView } from "expo-blur"; // Fallback to a dim background if not available, but BlurView is great usually.
+// import { BlurView } from "expo-blur"; // Fallback to a dim background if not available, but BlurView is great usually.
 
 export default function ConfirmModal({
   visible,

@@ -44,7 +44,7 @@ const Login = () => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#121212" }}>
       <KeyboardAvoidingView
         style={{ flex: 1 ,...styles.container}}
         behavior={Platform.OS === "ios" ? "padding" : "height"}

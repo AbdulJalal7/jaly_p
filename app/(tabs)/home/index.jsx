@@ -106,7 +106,7 @@ export default function Home() {
   }
 
   return (
-       <SafeAreaView style={{ flex: 1 }}>
+       <SafeAreaView style={{ flex: 1, backgroundColor: "#121212" }}>
     
     <View style={styles.container}>
       <FlatList
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 14,
-    backgroundColor: "rgba(161, 118, 216, 0.57)",
+    backgroundColor: "#121212",
   },
 
   card: {

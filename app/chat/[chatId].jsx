@@ -103,7 +103,7 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#121212',
   },
   centerContainer: {
     flex: 1,
@@ -116,20 +116,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16,
     marginTop: Platform.OS === 'android' ? 30 : 40,
-    backgroundColor: '#FFF',
+    backgroundColor: '#1E1E1E',
     borderBottomWidth: 1,
-    borderBottomColor: '#EEE',
+    borderBottomColor: '#333',
   },
   backButton: {
     padding: 8,
   },
   backButtonText: {
     fontSize: 16,
-    color: '#007AFF',
+    color: '#00FF66',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#FFF',
   },
   placeholder: {
     width: 50,

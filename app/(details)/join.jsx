@@ -102,7 +102,7 @@ export default function JoinTournament() {
 };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#121212" }}>
       <ScrollView style={styles.container}>
         <Text style={styles.title}>Join Tournament</Text>
 

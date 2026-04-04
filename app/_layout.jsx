@@ -4,6 +4,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "../context/authContext";
 import { View, ActivityIndicator } from "react-native";
 import Toast from "react-native-toast-message";
+import { StatusBar } from "expo-status-bar";
 
 function RootNavigation() {
   const { user, loading } = useAuth();
@@ -49,6 +50,7 @@ function RootNavigation() {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
+      <StatusBar style="light" />
       <AuthProvider>
         <RootNavigation />
       </AuthProvider>

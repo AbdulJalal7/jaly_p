@@ -22,21 +22,21 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <Ionicons name="home" color={color} size={size} />,
         }}
       />
-      <Tabs.Screen
-        name="tournament/index"
-        options={{
-          title: "Tournaments",
-          tabBarIcon: ({ color, size }) => <Ionicons name="trophy" color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="challenges/index"
-        options={{
-          title: "1v1",
-          href: "/challenges",
-          tabBarIcon: ({ color, size }) => <Ionicons name="game-controller" color={color} size={size} />,
-        }}
-      />
+    <Tabs.Screen
+      name="tournament/index"
+      options={{
+        title: "Challenges",
+        tabBarIcon: ({ color, size }) => <Ionicons name="game-controller" color={color} size={size} />,
+      }}
+    />
+    <Tabs.Screen
+      name="challenges/index"
+      options={{
+        title: "1v1",
+        href: "/challenges",
+        tabBarIcon: ({ color, size }) => <Ionicons name="game-controller" color={color} size={size} />,
+      }}
+    />
       <Tabs.Screen
         name="wallet/index"
         options={{

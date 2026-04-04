@@ -38,7 +38,7 @@ const Register = () => {
     };
 
   return (
-   <SafeAreaView style={{ flex: 1 }}>
+   <SafeAreaView style={{ flex: 1, backgroundColor: "#121212" }}>
   <KeyboardAvoidingView
     style={{ flex: 1 }}
     behavior={Platform.OS === "ios" ? "padding" : "height"}
