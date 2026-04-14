@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator, Image } from "react-native";
 import { Databases, Query } from "react-native-appwrite";
 import Toast from 'react-native-toast-message';
 import ConfirmModal from '../../../components/ConfirmModal';
@@ -10,13 +10,44 @@ const DATABASE_ID = process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID;
 const CHALLENGES_COLLECTION_ID = "challenges";
 const databases = new Databases(client);
 
+const MatchProofs = ({ challengeId, chalName, oppName }) => {
+  const [proofs, setProofs] = useState(null);
+
+  useEffect(() => {
+    challengeService.getMatchResults(challengeId).then((res) => {
+      if (res.documents.length > 0) {
+        setProofs(res.documents[0]);
+      }
+    }).catch(console.error);
+  }, [challengeId]);
+
+  if (!proofs) return <Text style={{color: '#888', fontSize: 12, textAlign: 'center', marginVertical: 10}}>No proofs uploaded yet.</Text>;
+
+  return (
+    <View style={{flexDirection: "row", gap: 10, marginTop: 10, marginBottom: 15}}>
+      <View style={{flex: 1}}>
+        <Text style={{color: '#fff', fontSize: 10, marginBottom: 4, textAlign: 'center'}}>{chalName} Proof:</Text>
+        {proofs.challenger_screenshot ? (
+          <Image source={{uri: proofs.challenger_screenshot}} style={{width: '100%', height: 100, borderRadius: 6, backgroundColor: '#333'}} resizeMode="cover" />
+        ) : <Text style={{color: '#666', fontSize: 10, textAlign: 'center'}}>Not uploaded</Text>}
+      </View>
+      
+      <View style={{flex: 1}}>
+        <Text style={{color: '#fff', fontSize: 10, marginBottom: 4, textAlign: 'center'}}>{oppName} Proof:</Text>
+        {proofs.opponent_screenshot ? (
+          <Image source={{uri: proofs.opponent_screenshot}} style={{width: '100%', height: 100, borderRadius: 6, backgroundColor: '#333'}} resizeMode="cover" />
+        ) : <Text style={{color: '#666', fontSize: 10, textAlign: 'center'}}>Not uploaded</Text>}
+      </View>
+    </View>
+  );
+};
+
 export default function AdminChallengesScreen() {
   const [challenges, setChallenges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("accepted"); // Active battles usually need admin the most
 
   // Form states per challenge
-  const [roomInputs, setRoomInputs] = useState({});
   const [modalVisible, setModalVisible] = useState(false);
   const [modalConfig, setModalConfig] = useState({
     title: "",
@@ -36,7 +67,9 @@ export default function AdminChallengesScreen() {
         Query.orderDesc("$createdAt"),
         Query.limit(100)
       ]);
-      setChallenges(resp.documents);
+      
+      const populated = await challengeService.populateUsers(resp.documents);
+      setChallenges(populated);
     } catch (error) {
       Toast.show({ type: 'error', text1: 'Error', text2: 'Could not load admin challenges.' });
     } finally {
@@ -51,27 +84,6 @@ export default function AdminChallengesScreen() {
 
   const getUserId = (userRel) => {
     return typeof userRel === 'object' ? userRel.$id : userRel;
-  };
-
-  // 1. Assign Room Details
-  const handleAssignRoom = async (challengeId) => {
-    const inputs = roomInputs[challengeId] || {};
-    if (!inputs.roomId || !inputs.roomPass) {
-      return Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Both Room ID and Password are required.' });
-    }
-
-    setModalConfig({
-      title: "Confirm Assignment",
-      message: "Assign these room details to the match?",
-      onConfirm: async () => {
-        try {
-          await challengeService.setRoomDetailsAdmin(challengeId, inputs.roomId, inputs.roomPass);
-          Toast.show({ type: 'success', text1: 'Success', text2: 'Room details assigned! Players can now see them.' });
-          loadChallenges();
-        } catch(e) { Toast.show({ type: 'error', text1: 'Error', text2: e.message }); }
-      }
-    });
-    setModalVisible(true);
   };
 
   // 2. Complete Match (Payout)
@@ -112,33 +124,14 @@ export default function AdminChallengesScreen() {
         <Text style={styles.vsText}>{chalName}  <Text style={{color: "#FF3366"}}>VS</Text>  {oppName}</Text>
         <Text style={styles.infoText}>Prize: ₹{item.prize}  |  Entry: ₹{item.entry_fee}</Text>
 
+        {item.status === "accepted" && <MatchProofs challengeId={item.$id} chalName={chalName} oppName={oppName} />}
+
         {item.status === "accepted" && (
           <View style={styles.adminActionBox}>
             <Text style={styles.boxTitle}>Admin Actions:</Text>
             
-            {/* Room Assignment */}
-            <View style={styles.roomRow}>
-              <TextInput 
-                style={styles.input} 
-                placeholder="Room/Match ID" 
-                placeholderTextColor="#666"
-                onChangeText={(val) => setRoomInputs(p => ({...p, [item.$id]: {...p[item.$id], roomId: val}}))}
-              />
-              <TextInput 
-                style={styles.input} 
-                placeholder="Password" 
-                placeholderTextColor="#666"
-                onChangeText={(val) => setRoomInputs(p => ({...p, [item.$id]: {...p[item.$id], roomPass: val}}))}
-              />
-            </View>
-            <TouchableOpacity style={styles.assignBtn} onPress={() => handleAssignRoom(item.$id)}>
-              <Text style={styles.btnText}>Assign Details to Players</Text>
-            </TouchableOpacity>
-
-            <View style={styles.separator} />
-            
             {/* Select Winner */}
-            <Text style={[styles.boxTitle, {marginTop: 10}]}>Select Winner (Payout):</Text>
+            <Text style={styles.boxTitle}>Select Winner (Payout):</Text>
             <View style={styles.winnerRow}>
               <TouchableOpacity 
                 style={[styles.winnerBtn, {backgroundColor: "#00FF66"}]} 
@@ -222,10 +215,6 @@ const styles = StyleSheet.create({
 
   adminActionBox: { marginTop: 15, backgroundColor: "#2A2A2A", padding: 12, borderRadius: 8 },
   boxTitle: { color: "#FF9900", fontSize: 12, fontWeight: "bold", marginBottom: 8 },
-  roomRow: { flexDirection: "row", gap: 10, marginBottom: 10 },
-  input: { flex: 1, backgroundColor: "#1e1e1e", color: "#fff", padding: 10, borderRadius: 6, fontSize: 14, borderWidth: 1, borderColor: "#444" },
-  assignBtn: { backgroundColor: "#333", padding: 12, borderRadius: 6, alignItems: "center" },
-  separator: { height: 1, backgroundColor: "#444", marginVertical: 15 },
   
   winnerRow: { flexDirection: "row", gap: 10 },
   winnerBtn: { flex: 1, paddingVertical: 12, borderRadius: 6, alignItems: "center" },

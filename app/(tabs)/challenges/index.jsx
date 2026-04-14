@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet, TextInput } from "react-native";
 import { useRouter } from "expo-router";
 import { Databases, Query } from "react-native-appwrite";
 import Toast from 'react-native-toast-message';
@@ -14,6 +14,7 @@ const databases = new Databases(client);
 export default function ChallengesScreen() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
   const { user: currentUser } = useAuth();
 
   const router = useRouter();
@@ -78,6 +79,17 @@ export default function ChallengesScreen() {
     );
   }
 
+  const displayedUsers = users.filter((u) => {
+    console.log("User : ", u.game_id);
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    const nameMatch = (u.username?.toLowerCase() || "").includes(q) || (u.name?.toLowerCase() || "").includes(q);
+    const gameIdMatch = (u.game_id?.toLowerCase() || "").includes(q);
+    console.log("Name Match : ", nameMatch);
+    console.log("Game ID Match : ", gameIdMatch);
+    return nameMatch || gameIdMatch;
+  });
+
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
@@ -90,8 +102,18 @@ export default function ChallengesScreen() {
         </TouchableOpacity>
       </View>
 
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search by name or game ID..."
+          placeholderTextColor="#888"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+      </View>
+
       <FlatList
-        data={users}
+        data={displayedUsers}
         keyExtractor={(item) => item.$id}
         contentContainerStyle={{ padding: 15 }}
         ListEmptyComponent={
@@ -101,6 +123,7 @@ export default function ChallengesScreen() {
           <View style={styles.card}>
             <View style={styles.userInfo}>
               <Text style={styles.username}>{item.username || item.name || "Unknown Player"}</Text>
+              {!!item.game_id && <Text style={styles.gameId}>Game ID: {item.game_id}</Text>}
               <Text style={styles.stats}>
                 🏆 Wins: {item.wins || 0} | 💔 Losses: {item.losses || 0} | ⚔️ Matches: {item.total_matches || 0}
               </Text>
@@ -144,6 +167,19 @@ const styles = StyleSheet.create({
     borderRadius: 8 
   },
   myChallengesText: { color: "#00FF66", fontWeight: "bold" },
+  searchContainer: {
+    paddingHorizontal: 15,
+    marginBottom: 10,
+  },
+  searchInput: {
+    backgroundColor: "#1e1e1e",
+    color: "#fff",
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#333",
+  },
   card: { 
     backgroundColor: "#1e1e1e", 
     padding: 15, 
@@ -157,6 +193,7 @@ const styles = StyleSheet.create({
   },
   userInfo: { flex: 1 },
   username: { fontSize: 18, fontWeight: "600", color: "#fff", marginBottom: 4 },
+  gameId: { fontSize: 13, color: "#FFA500", marginBottom: 4, fontWeight: "500" },
   stats: { fontSize: 12, color: "#aaa" },
   challengeBtn: { 
     backgroundColor: "#FF3366", 
