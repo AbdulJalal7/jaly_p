@@ -18,7 +18,7 @@ export const useMessages = (chatId) => {
       const docs = await ChatService.getMessages(chatId, 50, 0);
       setMessages(docs);
     } catch (error) {
-      console.error("Error fetching messages:", error);
+      // console.error("Error fetching messages:", error);
     } finally {
       setLoading(false);
     }
@@ -58,7 +58,7 @@ export const useMessages = (chatId) => {
       setSending(true);
       await ChatService.sendMessage(chatId, senderId, receiverId, messageText, 'text');
     } catch (error) {
-      console.error("Error sending message:", error);
+      // console.error("Error sending message:", error);
     } finally {
       setSending(false);
     }

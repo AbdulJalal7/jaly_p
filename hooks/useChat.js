@@ -16,7 +16,7 @@ export const useChat = () => {
       const chat = await ChatService.createOrGetChat(user.$id, targetUserId);
       return chat;
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       setError(err.message);
       return null;
     } finally {

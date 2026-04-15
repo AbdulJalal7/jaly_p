@@ -44,7 +44,7 @@ export default function MyTournamentsScreen() {
               participation_date: p.$createdAt,
             };
           } catch (err) {
-            console.log("Error fetching tournament detail:", err);
+            // console.log("Error fetching tournament detail:", err);
             return null; 
           }
         });
@@ -57,7 +57,7 @@ export default function MyTournamentsScreen() {
         setTournaments(validTournaments);
       }
     } catch (error) {
-      console.log("Failed to load my tournaments:", error);
+      // console.log("Failed to load my tournaments:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);

@@ -30,7 +30,7 @@ export default function Home() {
       const response = await tournamentService.getTournaments();
       setTournaments(response.documents);
     } catch (error) {
-      console.log(error);
+      // console.log(error);
       Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to load tournaments' });
     } finally {
       setLoading(false);

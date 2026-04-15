@@ -28,7 +28,7 @@ export default function AdminWalletRequests() {
       if (activeTab === "deposits") {
         const res = await walletService.getPendingDeposits();
         setRequests(res.documents);
-        console.log("pending depositssssssss :",requests);
+        // console.log("pending depositssssssss :",requests);
       } else {
         const res = await walletService.getPendingWithdrawals();
         setRequests(res.documents);

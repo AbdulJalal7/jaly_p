@@ -19,7 +19,7 @@ export default function WalletScreen() {
       // 1. Fetch balance
       // const userStat = await walletService.getUserWallet(user.$id);
       setBalance(user.wallet_balance || 0);
-      console.log("user : ",user);
+      // console.log("user : ",user);
       // 2. Fetch transactions
       const history = await walletService.getUserTransactions(user);
       setTransactions(history.documents);

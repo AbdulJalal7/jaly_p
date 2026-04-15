@@ -37,7 +37,7 @@ export default function ChallengeDetail() {
       setParticipants(parts.documents);
       
       const results = await challengesApi.getMatchResults(id);
-      console.log("Match Resultssssssssssssss : ", results);
+      // console.log("Match Resultssssssssssssss : ", results);
       setMatchResults(results.documents);
     } catch (error) {
       console.error(error);

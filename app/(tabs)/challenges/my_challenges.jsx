@@ -64,7 +64,7 @@ export default function MyChallengesScreen() {
       const data = await challengeService.getUserChallenges(user.$id);
       setChallenges(data);
     } catch (error) {
-      console.log("Error loading challenges:", error);
+      // console.log("Error loading challenges:", error);
     } finally {
       setLoading(false);
     }
@@ -222,10 +222,10 @@ export default function MyChallengesScreen() {
 
   const renderItem = ({ item }) => {
     const amChallenger = isChallenger(item);
-    console.log("Challenger ID : ", item.challenger_id );
-    console.log("Challenger Name : ", item.challenger_id.username );
-    console.log("Opponent ID : ", item.opponent_id );
-    console.log("Opponent Name : ", item.opponent_id.username );  
+    // console.log("Challenger ID : ", item.challenger_id );
+    // console.log("Challenger Name : ", item.challenger_id.username );
+    // console.log("Opponent ID : ", item.opponent_id );
+    // console.log("Opponent Name : ", item.opponent_id.username );  
     
     // Attempt extracting reliable names safely
     const chalNameRaw = typeof item.challenger_id === 'object' ? (item.challenger_id?.username || item.challenger_id?.name || 'Challenger') : 'Challenger';

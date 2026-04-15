@@ -28,7 +28,7 @@ const Register = () => {
       await register(rform);
       router.replace("/(tabs)/home");
     } catch (error) {
-      console.error("Signup error:", error);
+      
       Toast.show({
         type: 'error',
         text1: 'Signup failed',

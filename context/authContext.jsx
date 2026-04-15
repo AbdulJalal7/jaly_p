@@ -14,9 +14,9 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log("user : ",user);
+    // console.log("user : ",user);
     restoreSession();
-    console.log("user after getssssssssss : ",user);
+    // console.log("user after getssssssssss : ",user);
 
   }, []);
 
@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (!user || (!user.$id)) return;
 
-    console.log("Subscribing to Realtime events for user:", user.$id);
+    // console.log("Subscribing to Realtime events for user:", user.$id);
     const unsubscribe = client.subscribe(
       `databases.${DATABASE_ID}.collections.${USERS_COLLECTION_ID}.documents.${user.$id}`,
       (response) => {
@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }) => {
             `databases.${DATABASE_ID}.collections.${USERS_COLLECTION_ID}.documents.${user.$id}.update`
           )
         ) {
-          console.log("Realtime user update received:", response.payload);
+          // console.log("Realtime user update received:", response.payload);
           setUser((prevUser) => ({
             ...prevUser,
             ...response.payload,
@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }) => {
         setUser(currentUser);
       }
     } catch (error) {
-      console.log("Session restore failed", error);
+      // console.log("Session restore failed", error);
     } finally {
       setLoading(false);
     }

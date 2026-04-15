@@ -53,7 +53,7 @@ export default function TournamentDetails() {
 
   useEffect(() => {
     if (id) {
-      console.log("Fetching tournament details for ID:", id);
+      
       fetchTournament();
       fetchLeaderboard();
     }
@@ -61,7 +61,7 @@ export default function TournamentDetails() {
 
   useEffect(() => {
     if (user && id) {
-      console.log("User and tournament ID available, checking join status...");
+      
       checkIfJoined();
     }
   }, [user, id]);
@@ -82,7 +82,7 @@ export default function TournamentDetails() {
       const res = await resultsService.getTournamentResults(id);
       setResults(res);
     } catch (error) {
-      console.log("Failed to fetch results", error);
+      // console.log("Failed to fetch results", error);
     } finally {
       setFetchingResults(false);
     }
@@ -93,7 +93,7 @@ export default function TournamentDetails() {
       const response = await tournamentService.getTournament(id);
       setTournament(response);
     } catch (error) {
-      console.log(error);
+      // console.log(error);
       Toast.show({ type: 'error', text1: "Error", text2: "Failed to load tournament details" });
     } finally {
       setLoading(false);
@@ -101,7 +101,7 @@ export default function TournamentDetails() {
   };
 
   const checkIfJoined = async () => {
-    console.log("Checking if user has joined tournament... User ID:", user.user_id, "Tournament ID:", id);
+    // console.log("Checking if user has joined tournament... User ID:", user.user_id, "Tournament ID:", id);
     try {
      
       const res = await databases.listDocuments(
@@ -112,9 +112,9 @@ export default function TournamentDetails() {
           Query.equal("user_id", user.$id),
         ]
       );
-      console.log("Checking join status for res   :", res);
+      // console.log("Checking join status for res   :", res);
 
-      console.log("Join check result:", res.documents.length);
+      // console.log("Join check result:", res.documents.length);
       if (res.documents.length > 0) {
         setJoined(true);
         setJoinStatus(res.documents[0].payment_status);
@@ -123,9 +123,9 @@ export default function TournamentDetails() {
         setJoined(false);
         setJoinStatus(null);
       }
-      console.log("Join status:", joinStatus);
+      // console.log("Join status:", joinStatus);
     } catch (error) {
-      console.log("Join check error:", error);
+      // console.log("Join check error:", error);
     }
   };
 

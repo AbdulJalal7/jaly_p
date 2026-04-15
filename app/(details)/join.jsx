@@ -66,7 +66,7 @@ export default function JoinTournament() {
     setReceipt(selectedImage);
 
   } catch (error) {
-    console.log("Image Picker Error:", error);
+    // console.log("Image Picker Error:", error);
     Toast.show({ type: 'error', text1: "Error", text2: "Something went wrong while picking image." });
   }
 };
@@ -94,7 +94,7 @@ export default function JoinTournament() {
     });
 
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     Toast.show({ type: 'error', text1: "Error", text2: "Failed to join tournament" });
   } finally {
     setLoading(false);

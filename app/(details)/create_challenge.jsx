@@ -73,7 +73,7 @@ export default function CreateChallenge() {
         });
       }
     } catch (error) {
-       console.error(error);
+     
        Alert.show({ type: "error", text1: "Creation Failed", text2: error.message });
     } finally {
       setLoading(false);

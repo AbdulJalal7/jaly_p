@@ -40,10 +40,10 @@ export default function ChallengesScreen() {
       const filteredUsers = resp.documents.filter(
         (u) => u.$id !== currentUser.$id && u.user_id !== currentAccountId
       );
-      console.log("Filtered Users : ", filteredUsers);
+      // console.log("Filtered Users : ", filteredUsers);
       setUsers(filteredUsers);
     } catch (error) {
-      console.log("Error fetching users:", error);
+      // console.log("Error fetching users:", error);
     } finally {
       setLoading(false);
     }
@@ -80,13 +80,13 @@ export default function ChallengesScreen() {
   }
 
   const displayedUsers = users.filter((u) => {
-    console.log("User : ", u.game_id);
+    // console.log("User : ", u.game_id);
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     const nameMatch = (u.username?.toLowerCase() || "").includes(q) || (u.name?.toLowerCase() || "").includes(q);
     const gameIdMatch = (u.game_id?.toLowerCase() || "").includes(q);
-    console.log("Name Match : ", nameMatch);
-    console.log("Game ID Match : ", gameIdMatch);
+    // console.log("Name Match : ", nameMatch);
+    // console.log("Game ID Match : ", gameIdMatch);
     return nameMatch || gameIdMatch;
   });
 
