@@ -124,6 +124,7 @@ export default function ChallengesScreen() {
             <View style={styles.userInfo}>
               <Text style={styles.username}>{item.username || item.name || "Unknown Player"}</Text>
               {!!item.game_id && <Text style={styles.gameId}>Game ID: {item.game_id}</Text>}
+              {!!item.game_name && <Text style={styles.gameName}>Game Name: {item.game_name}</Text>}
               <Text style={styles.stats}>
                 🏆 Wins: {item.wins || 0} | 💔 Losses: {item.losses || 0} | ⚔️ Matches: {item.total_matches || 0}
               </Text>
@@ -194,6 +195,7 @@ const styles = StyleSheet.create({
   userInfo: { flex: 1 },
   username: { fontSize: 18, fontWeight: "600", color: "#fff", marginBottom: 4 },
   gameId: { fontSize: 13, color: "#FFA500", marginBottom: 4, fontWeight: "500" },
+  gameName: { fontSize: 13, color: "#00E5FF", marginBottom: 4, fontWeight: "500" },
   stats: { fontSize: 12, color: "#aaa" },
   challengeBtn: { 
     backgroundColor: "#FF3366", 
