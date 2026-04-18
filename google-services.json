@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "540274506562",
+    "project_id": "tournaments-9b73d",
+    "storage_bucket": "tournaments-9b73d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:540274506562:android:764e826bf19755ee8126db",
+        "android_client_info": {
+          "package_name": "com.jaly.p"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDcSinOZdCXpy6WN1gilFtECCVKnxJozVY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

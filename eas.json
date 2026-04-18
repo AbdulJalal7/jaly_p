@@ -7,6 +7,9 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
       "env": {
         "EXPO_PUBLIC_APPWRITE_PROJECT_ID": "697dfe15002b2e5b8ace",
         "EXPO_PUBLIC_APPWRITE_ENDPOINT": "https://sgp.cloud.appwrite.io/v1",

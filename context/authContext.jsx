@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import * as SecureStore from "expo-secure-store";
 import authService from "../lib/appwrite/auth";
 import client from "../lib/appwrite/client";
+import { savePushToken } from "../lib/notifications";
 
 const AuthContext = createContext();
 
@@ -53,8 +54,9 @@ export const AuthProvider = ({ children }) => {
 
       if (storedUser) {
         const currentUser = await authService.getCurrentUser();
-        
         setUser(currentUser);
+        // Refresh push token on every app open
+        savePushToken(currentUser.$id);
       }
     } catch (error) {
       // console.log("Session restore failed", error);
@@ -68,6 +70,7 @@ export const AuthProvider = ({ children }) => {
     const currentUser = await authService.getCurrentUser();
 
     setUser(currentUser);
+    savePushToken(currentUser.$id);
 
     await SecureStore.setItemAsync(
       STORAGE_KEY,
@@ -80,6 +83,7 @@ export const AuthProvider = ({ children }) => {
     const currentUser = await authService.getCurrentUser();
 
     setUser(currentUser);
+    savePushToken(currentUser.$id);
 
     await SecureStore.setItemAsync(
       STORAGE_KEY,
