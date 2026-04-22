@@ -6,6 +6,7 @@ import Toast from 'react-native-toast-message';
 import ConfirmModal from '../../../components/ConfirmModal';
 import { useAuth } from "../../../context/authContext";
 import challengeService from "../../../lib/appwrite/challenges";
+import TextRecognition from '@react-native-ml-kit/text-recognition';
 
 const MatchProofs = ({ challengeId, refreshKey, chalName, oppName }) => {
   const [proofs, setProofs] = useState(null);
@@ -197,6 +198,20 @@ export default function MyChallengesScreen() {
         uri = `file://${uri}`;
       }
 
+      // --- ML Kit Text Recognition ---
+      let outcome = "unknown";
+      try {
+        const result = await TextRecognition.recognize(uri);
+        const text = result.text.toUpperCase();
+        if (text.includes("VICTORY") || text.includes("WINNER") || text.includes("1ST")) {
+          outcome = "victory";
+        } else if (text.includes("DEFEAT") || text.includes("LOSE") || text.includes("LOSER")) {
+          outcome = "defeat";
+        }
+      } catch (ocrError) {
+        console.error("OCR Error:", ocrError);
+      }
+
       const fileObj = {
         name: pickedImage.fileName || `result_${Date.now()}.jpg`,
         type: pickedImage.mimeType || "image/jpeg",
@@ -205,9 +220,39 @@ export default function MyChallengesScreen() {
       };
 
       const { fileUrl } = await challengeService.uploadResultFile(fileObj);
-      await challengeService.uploadMatchResult(selectedChallengeForUpload.$id, user.$id, fileUrl);
+      const updatedResultDoc = await challengeService.uploadMatchResult(selectedChallengeForUpload.$id, user.$id, fileUrl, outcome);
       
       Toast.show({ type: "success", text1: "Result Uploaded Successfully" });
+
+      // --- Auto Announce Winner Logic ---
+      if (updatedResultDoc.challenger_outcome && updatedResultDoc.opponent_outcome) {
+        const chalOutcome = updatedResultDoc.challenger_outcome;
+        const oppOutcome = updatedResultDoc.opponent_outcome;
+        
+        // Ensure one is victory and one is defeat
+        if ((chalOutcome === "victory" && oppOutcome === "defeat") || (chalOutcome === "defeat" && oppOutcome === "victory")) {
+          // Both uploaded and have contrasting outcomes, settle the match!
+          const challenge = selectedChallengeForUpload;
+          const winnerId = chalOutcome === "victory" 
+            ? (typeof challenge.challenger_id === 'object' ? challenge.challenger_id.$id : challenge.challenger_id)
+            : (typeof challenge.opponent_id === 'object' ? challenge.opponent_id.$id : challenge.opponent_id);
+            
+          const loserId = chalOutcome === "victory"
+            ? (typeof challenge.opponent_id === 'object' ? challenge.opponent_id.$id : challenge.opponent_id)
+            : (typeof challenge.challenger_id === 'object' ? challenge.challenger_id.$id : challenge.challenger_id);
+            
+          await challengeService.completeChallengeAdmin({
+            challengeId: challenge.$id,
+            winnerId,
+            loserId,
+            prize: challenge.prize
+          });
+          
+          Toast.show({ type: "success", text1: "Match Auto-Completed!", text2: "Results verified and prize distributed." });
+          loadChallenges();
+        }
+      }
+      
       setUploadModalVisible(false);
       setPickedImage(null);
       setSelectedChallengeForUpload(null);
