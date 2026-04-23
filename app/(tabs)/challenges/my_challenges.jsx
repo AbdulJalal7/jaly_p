@@ -199,24 +199,34 @@ export default function MyChallengesScreen() {
       }
 
       // --- ML Kit Text Recognition ---
-      let outcome = "unknown";
+      let outcome = "disputed";
       try {
         const result = await TextRecognition.recognize(uri);
         const text = result.text.toUpperCase();
         if (text.includes("VICTORY") || text.includes("WINNER") || text.includes("1ST")) {
           outcome = "victory";
-        console.log("Outcome victory: ", outcome);
+          console.log("Outcome victory: ", outcome);
         } else if (text.includes("DEFEAT") || text.includes("LOSE") || text.includes("LOSER") || text.includes("DEFEA!")) {
           outcome = "defeat";
-          console.log("Outcome defeat : ", outcome);
+          console.log("Outcome defeat: ", outcome);
+        } else {
+          outcome = "disputed";
+          console.warn("OCR could not determine outcome. Flagged as disputed.");
+          console.log("Extracted Text:", text);
         }
-        else {
-          outcome = "unknown";
-          console.log("Text : ", text);
-          console.log("Outcome unknown : ", outcome);
-        } 
       } catch (ocrError) {
+        outcome = "disputed";
         console.error("OCR Error:", ocrError);
+      }
+
+      // Warn user if OCR could not auto-detect the result
+      if (outcome === "disputed") {
+        Toast.show({
+          type: "error",
+          text1: "⚠️ Result Not Detected",
+          text2: "OCR could not read your screenshot. An admin will review and decide the winner.",
+          visibilityTime: 5000,
+        });
       }
 
       const fileObj = {
@@ -235,28 +245,48 @@ export default function MyChallengesScreen() {
       if (updatedResultDoc.challenger_outcome && updatedResultDoc.opponent_outcome) {
         const chalOutcome = updatedResultDoc.challenger_outcome;
         const oppOutcome = updatedResultDoc.opponent_outcome;
-        
-        // Ensure one is victory and one is defeat
-        if ((chalOutcome === "victory" && oppOutcome === "defeat") || (chalOutcome === "defeat" && oppOutcome === "victory")) {
-          // Both uploaded and have contrasting outcomes, settle the match!
+
+        const hasDisputed = chalOutcome === "disputed" || oppOutcome === "disputed";
+        const hasBothContrasting =
+          (chalOutcome === "victory" && oppOutcome === "defeat") ||
+          (chalOutcome === "defeat" && oppOutcome === "victory");
+
+        if (hasBothContrasting) {
+          // Both submitted clear, contrasting results — auto-settle the match
           const challenge = selectedChallengeForUpload;
-          const winnerId = chalOutcome === "victory" 
+          const winnerId = chalOutcome === "victory"
             ? (typeof challenge.challenger_id === 'object' ? challenge.challenger_id.$id : challenge.challenger_id)
             : (typeof challenge.opponent_id === 'object' ? challenge.opponent_id.$id : challenge.opponent_id);
-            
+
           const loserId = chalOutcome === "victory"
             ? (typeof challenge.opponent_id === 'object' ? challenge.opponent_id.$id : challenge.opponent_id)
             : (typeof challenge.challenger_id === 'object' ? challenge.challenger_id.$id : challenge.challenger_id);
-            
+
           await challengeService.completeChallengeAdmin({
             challengeId: challenge.$id,
             winnerId,
             loserId,
             prize: challenge.prize
           });
-          
-          Toast.show({ type: "success", text1: "Match Auto-Completed!", text2: "Results verified and prize distributed." });
+
+          Toast.show({ type: "success", text1: "✅ Match Auto-Completed!", text2: "Results verified and prize distributed." });
           loadChallenges();
+        } else if (hasDisputed) {
+          // One or both results could not be read — flag for admin review
+          Toast.show({
+            type: "error",
+            text1: "🔍 Admin Review Required",
+            text2: "One or both results could not be verified. An admin will decide the winner.",
+            visibilityTime: 6000,
+          });
+        } else {
+          // Both players claimed the same outcome (both victory or both defeat) — conflict!
+          Toast.show({
+            type: "error",
+            text1: "⚠️ Conflicting Results",
+            text2: "Both players claimed the same outcome. An admin will review and decide the winner.",
+            visibilityTime: 6000,
+          });
         }
       }
       
