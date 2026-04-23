@@ -205,9 +205,16 @@ export default function MyChallengesScreen() {
         const text = result.text.toUpperCase();
         if (text.includes("VICTORY") || text.includes("WINNER") || text.includes("1ST")) {
           outcome = "victory";
-        } else if (text.includes("DEFEAT") || text.includes("LOSE") || text.includes("LOSER")) {
+        console.log("Outcome victory: ", outcome);
+        } else if (text.includes("DEFEAT") || text.includes("LOSE") || text.includes("LOSER") || text.includes("DEFEA!")) {
           outcome = "defeat";
+          console.log("Outcome defeat : ", outcome);
         }
+        else {
+          outcome = "unknown";
+          console.log("Text : ", text);
+          console.log("Outcome unknown : ", outcome);
+        } 
       } catch (ocrError) {
         console.error("OCR Error:", ocrError);
       }
