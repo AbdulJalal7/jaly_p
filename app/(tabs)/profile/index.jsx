@@ -1,17 +1,60 @@
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Image, Platform } from "react-native";
 import { useAuth } from "../../../context/authContext";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
 import Toast from 'react-native-toast-message';
 import supportService from "../../../lib/appwrite/support";
+import authService from "../../../lib/appwrite/auth";
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 
 export default function Profile() {
   const { logout, user } = useAuth();
   const router = useRouter();
   
   const [loadingSupport, setLoadingSupport] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  const handlePickAvatar = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      uploadProfileImage(result.assets[0]);
+    }
+  };
+
+  const uploadProfileImage = async (imageAsset) => {
+    if (!user?.$id) return;
+    setUploadingAvatar(true);
+    try {
+      let uri = imageAsset.uri;
+      if (Platform.OS !== "web" && !uri.startsWith("file://") && !uri.startsWith("content://")) {
+        uri = `file://${uri}`;
+      }
+
+      const fileObj = {
+        name: imageAsset.fileName || `avatar_${Date.now()}.jpg`,
+        type: imageAsset.mimeType || "image/jpeg",
+        uri: uri,
+        size: imageAsset.fileSize || 0
+      };
+
+      await authService.uploadAvatar(fileObj, user.user_id);
+      
+      Toast.show({ type: 'success', text1: 'Avatar Updated', text2: 'Your profile picture has been updated.' });
+    } catch (error) {
+      console.error(error);
+      Toast.show({ type: 'error', text1: 'Upload Failed', text2: error.message });
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -39,7 +82,18 @@ export default function Profile() {
         </View>
 
         <View style={styles.avatarContainer}>
-          <Ionicons name="person-circle" size={70} color="#FF3366" />
+          <TouchableOpacity onPress={handlePickAvatar} disabled={uploadingAvatar} style={styles.avatarImageWrapper}>
+            {uploadingAvatar ? (
+              <ActivityIndicator size="large" color="#FF3366" style={styles.avatarLoading} />
+            ) : user?.avatar ? (
+              <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
+            ) : (
+              <Ionicons name="person-circle" size={80} color="#FF3366" />
+            )}
+            <View style={styles.editBadge}>
+              <Ionicons name="pencil" size={12} color="#fff" />
+            </View>
+          </TouchableOpacity>
           <View style={styles.userInfo}>
             <Text style={styles.userName}>{user?.name || "Player"}</Text>
             <Text style={styles.userEmail}>{user?.email}</Text>
@@ -116,6 +170,36 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
+  },
+  avatarImageWrapper: {
+    position: "relative",
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#1e1e1e",
+  },
+  avatarImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
+  avatarLoading: {
+    position: "absolute",
+  },
+  editBadge: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    backgroundColor: "#FF3366",
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#121212",
   },
   userInfo: {
     marginLeft: 15,

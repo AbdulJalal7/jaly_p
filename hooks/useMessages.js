@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { AppState } from 'react-native';
 import client from '../lib/appwrite/client';
 import ChatService from '../lib/appwrite/chat';
 
@@ -27,29 +28,55 @@ export const useMessages = (chatId) => {
   useEffect(() => {
     fetchMessages();
 
-    // Subscribe to realtime messages
-    const unsubscribe = client.subscribe(
-      `databases.${DATABASE_ID}.collections.${MESSAGES_COLLECTION_ID}.documents`,
-      (response) => {
-        // Only handle new messages for this particular chat
-        if (
-          response.events.includes("databases.*.collections.*.documents.*.create") &&
-          response.payload.chat_id === chatId
-        ) {
-          // Prepend the new message to our list
-          setMessages((prevMessages) => {
-            // Avoid duplicates
-            if (prevMessages.find(m => m.$id === response.payload.$id)) {
-               return prevMessages;
-            }
-            return [response.payload, ...prevMessages];
-          });
+    let unsubscribe = null;
+
+    const subscribeToChat = () => {
+      if (unsubscribe) return;
+      unsubscribe = client.subscribe(
+        `databases.${DATABASE_ID}.collections.${MESSAGES_COLLECTION_ID}.documents`,
+        (response) => {
+          // Only handle new messages for this particular chat
+          if (
+            response.events.includes("databases.*.collections.*.documents.*.create") &&
+            response.payload.chat_id === chatId
+          ) {
+            // Prepend the new message to our list
+            setMessages((prevMessages) => {
+              // Avoid duplicates
+              if (prevMessages.find(m => m.$id === response.payload.$id)) {
+                 return prevMessages;
+              }
+              return [response.payload, ...prevMessages];
+            });
+          }
         }
+      );
+    };
+
+    const cleanupSubscription = () => {
+      if (unsubscribe) {
+        unsubscribe();
+        unsubscribe = null;
       }
-    );
+    };
+
+    // Initial subscribe
+    subscribeToChat();
+
+    // Handle AppState
+    const appStateSubscription = AppState.addEventListener("change", (nextAppState) => {
+      if (nextAppState === "active") {
+        subscribeToChat();
+        // Refresh messages in case we missed any while in background
+        fetchMessages();
+      } else if (nextAppState === "background" || nextAppState === "inactive") {
+        cleanupSubscription();
+      }
+    });
 
     return () => {
-      unsubscribe();
+      cleanupSubscription();
+      appStateSubscription.remove();
     };
   }, [chatId, fetchMessages]);
 

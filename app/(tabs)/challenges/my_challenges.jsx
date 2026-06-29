@@ -90,6 +90,12 @@ export default function MyChallengesScreen() {
     return typeof op === 'object' ? (op.username || op.name) : "Opponent Player";
   };
 
+  const getOpponentAvatar = (c) => {
+    const amChallenger = isChallenger(c);
+    const op = amChallenger ? c.opponent_id : c.challenger_id;
+    return typeof op === 'object' ? op.avatar : null;
+  };
+
   // 🔴 ACTIONS
   const handleCancel = async (c) => {
     setModalConfig({
@@ -320,9 +326,15 @@ export default function MyChallengesScreen() {
           <Text style={[styles.badge, styles[`badge_${item.status}`]]}>{item.status.toUpperCase()}</Text>
         </View>
         
-        <Text style={styles.cardBody}>
-          <Text style={{color: "#aaa"}}>Match VS:</Text> {getOpponentName(item)}
-        </Text>
+        <View style={styles.matchVsRow}>
+          <Text style={{color: "#aaa", marginRight: 8}}>Match VS:</Text>
+          {getOpponentAvatar(item) ? (
+            <Image source={{ uri: getOpponentAvatar(item) }} style={styles.avatarSmall} />
+          ) : (
+            <Ionicons name="person-circle" size={24} color="#FF3366" />
+          )}
+          <Text style={styles.cardBodyText}> {getOpponentName(item)}</Text>
+        </View>
         <Text style={styles.cardBody}>
           <Text style={{color: "#aaa"}}>Entry:</Text> ₹{item.entry_fee} | <Text style={{color: "#aaa"}}>Prize:</Text> ₹{item.prize}
         </Text>
@@ -499,6 +511,9 @@ const styles = StyleSheet.create({
   badge_cancelled: { backgroundColor: "#555", color: "#ccc" },
   
   cardBody: { fontSize: 14, color: "#fff", marginBottom: 4 },
+  cardBodyText: { fontSize: 14, color: "#fff", fontWeight: "bold", marginLeft: 4 },
+  matchVsRow: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
+  avatarSmall: { width: 24, height: 24, borderRadius: 12, backgroundColor: "#333" },
   actionRow: { flexDirection: "row", marginTop: 15, gap: 10 },
   actionBtn: { flex: 1, paddingVertical: 10, borderRadius: 6, alignItems: "center" },
   btnRed: { backgroundColor: "#FF3366" },

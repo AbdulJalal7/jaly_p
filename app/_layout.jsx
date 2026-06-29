@@ -2,9 +2,15 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "../context/authContext";
-import { View, ActivityIndicator } from "react-native";
+import { View, ActivityIndicator, LogBox } from "react-native";
 import Toast from "react-native-toast-message";
 import { StatusBar } from "expo-status-bar";
+
+LogBox.ignoreLogs([
+  "Realtime got disconnected",
+  "INVALID_STATE_ERR",
+  "Software caused connection abort"
+]);
 
 function RootNavigation() {
   const { user, loading } = useAuth();
@@ -15,9 +21,11 @@ function RootNavigation() {
     if (loading) return;
 
     const inAuthGroup = segments[0] === "(auth)";
+    // Don't redirect while on the OAuth callback page — the session is being created
+    const inOAuthCallback = segments[0] === "oauth-callback";
 
-    // 🚫 Not logged in → redirect to login
-    if (!user && !inAuthGroup) {
+    // 🚫 Not logged in → redirect to login (but not if on OAuth callback)
+    if (!user && !inAuthGroup && !inOAuthCallback) {
       router.replace("/(auth)/login");
       return;
     }

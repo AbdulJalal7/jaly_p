@@ -8,6 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Alert from "react-native-toast-message";
 
 import * as ImagePicker from "expo-image-picker";
+import TextRecognition from '@react-native-ml-kit/text-recognition';
 
 export default function ChallengeDetail() {
   const { id } = useLocalSearchParams();
@@ -129,6 +130,37 @@ export default function ChallengeDetail() {
         uri = `file://${uri}`;
       }
 
+      // --- ML Kit Text Recognition ---
+      let outcome = "disputed";
+      try {
+        const result = await TextRecognition.recognize(uri);
+        const text = result.text.toUpperCase();
+        if (text.includes("VICTORY") || text.includes("WINNER") || text.includes("1ST")) {
+          outcome = "victory";
+          console.log("Outcome victory: ", outcome);
+        } else if (text.includes("DEFEAT") || text.includes("LOSE") || text.includes("LOSER") || text.includes("DEFEA!")) {
+          outcome = "defeat";
+          console.log("Outcome defeat: ", outcome);
+        } else {
+          outcome = "disputed";
+          console.warn("OCR could not determine outcome. Flagged as disputed.");
+          console.log("Extracted Text:", text);
+        }
+      } catch (ocrError) {
+        outcome = "disputed";
+        console.error("OCR Error:", ocrError);
+      }
+
+      // Warn user if OCR could not auto-detect the result
+      if (outcome === "disputed") {
+        Alert.show({
+          type: "error",
+          text1: "⚠️ Result Not Detected",
+          text2: "OCR could not read your screenshot. An admin will review and decide the winner.",
+          visibilityTime: 5000,
+        });
+      }
+
       const fileObj = {
         name: pickedImage.fileName || `result_${Date.now()}.jpg`,
         type: pickedImage.mimeType || "image/jpeg",
@@ -140,9 +172,52 @@ export default function ChallengeDetail() {
       const { fileUrl } = await challengesApi.uploadResultFile(fileObj);
 
       // Save to Results Collection
-      await challengesApi.uploadMatchResult(challenge.$id, user.$id, fileUrl);
+      const updatedResultDoc = await challengesApi.uploadMatchResult(challenge.$id, user.$id, fileUrl, outcome);
       
       Alert.show({ type: "success", text1: "Result Uploaded Successfully" });
+
+      // --- Auto Announce Winner Logic ---
+      if (updatedResultDoc.challenger_outcome && updatedResultDoc.opponent_outcome) {
+        const chalOutcome = updatedResultDoc.challenger_outcome;
+        const oppOutcome = updatedResultDoc.opponent_outcome;
+
+        const hasDisputed = chalOutcome === "disputed" || oppOutcome === "disputed";
+        const hasBothContrasting =
+          (chalOutcome === "victory" && oppOutcome === "defeat") ||
+          (chalOutcome === "defeat" && oppOutcome === "victory");
+
+        if (hasBothContrasting) {
+          // Both submitted clear, contrasting results — auto-settle the match
+          const winnerId = chalOutcome === "victory"
+            ? (typeof challenge.creator_id === 'object' ? challenge.creator_id.$id : challenge.creator_id)
+            : challenge.selected_opponent_id; 
+
+          await challengesApi.completeTeamChallengeAdmin({
+            challengeId: challenge.$id,
+            winnerId,
+            prize: challenge.prize_pool || (challenge.challenge_price * 1.8)
+          });
+
+          Alert.show({ type: "success", text1: "✅ Match Auto-Completed!", text2: "Results verified and prize distributed." });
+        } else if (hasDisputed) {
+          // One or both results could not be read — flag for admin review
+          Alert.show({
+            type: "error",
+            text1: "🔍 Admin Review Required",
+            text2: "One or both results could not be verified. An admin will decide the winner.",
+            visibilityTime: 6000,
+          });
+        } else {
+          // Both players claimed the same outcome (both victory or both defeat) — conflict!
+          Alert.show({
+            type: "error",
+            text1: "⚠️ Conflicting Results",
+            text2: "Both players claimed the same outcome. An admin will review and decide the winner.",
+            visibilityTime: 6000,
+          });
+        }
+      }
+
       setUploadModalVisible(false);
       setPickedImage(null);
       fetchDetails(); // Refresh to show we've uploaded
@@ -291,9 +366,16 @@ export default function ChallengeDetail() {
         ) : (
           participants.map((p, index) => (
             <View key={p.$id} style={styles.participantItem}>
-              <View>
-                <Text style={styles.pName}>{p.user_name} {p.user_id === user.$id && "(You)"}</Text>
-                <Text style={styles.pStatus}>Status: {p.status}</Text>
+              <View style={styles.participantUserDisplay}>
+                {p.user_avatar ? (
+                  <Image source={{ uri: p.user_avatar }} style={styles.avatarSmall} />
+                ) : (
+                  <Ionicons name="person-circle" size={32} color="#FF3366" />
+                )}
+                <View>
+                  <Text style={styles.pName}>{p.user_name} {p.user_id === user.$id && "(You)"}</Text>
+                  <Text style={styles.pStatus}>Status: {p.status}</Text>
+                </View>
               </View>
               
               {isCreator && challenge.status === "open" && (
@@ -394,6 +476,17 @@ const styles = StyleSheet.create({
   roomText: { color: "#AAA", fontSize: 16, marginBottom: 4 },
   infoText: { color: "#AAA", fontStyle: "italic" },
   participantItem: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: "#1E1E1E", padding: 16, borderRadius: 8, marginBottom: 8, borderWidth: 1, borderColor: "#333" },
+  participantUserDisplay: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10
+  },
+  avatarSmall: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#333",
+  },
   pName: { color: "#FFF", fontSize: 16, fontWeight: "bold" },
   pStatus: { color: "#888", fontSize: 14, marginTop: 4 },
   selectBtn: { backgroundColor: "#FF3366", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },

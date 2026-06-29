@@ -11,7 +11,7 @@ import { OAuthProvider } from "react-native-appwrite";
 import authService from "../../lib/appwrite/auth";
 
 const Login = () => {
-    const { login } = useAuth();
+    const { login, loginWithGoogle } = useAuth();
       const router = useRouter();
   
   const [email, setEmail] = useState('');
@@ -32,7 +32,10 @@ const Login = () => {
 
   const onHandleGoogleLogin = async () => {
     try {
+      // 1. Do the OAuth browser flow and create the Appwrite session
       await authService.loginWithOAuth(OAuthProvider.Google);
+      // 2. Update AuthProvider state + persist to SecureStore
+      await loginWithGoogle();
       router.replace("/(tabs)/home");
     } catch (error) {
        Toast.show({

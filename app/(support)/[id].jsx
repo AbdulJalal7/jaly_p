@@ -17,8 +17,11 @@ export default function TicketDetails() {
   const fetchTicket = async () => {
     try {
       setLoading(true);
+      console.log('Fetching ticket:', id);
       const data = await supportService.getTicket(id);
       setTicket(data);
+
+      
     } catch (error) {
       console.error('Error fetching ticket details', error);
     } finally {

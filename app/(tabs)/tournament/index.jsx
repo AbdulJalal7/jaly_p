@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState, useCallback } from "react";
 import { useRouter, useFocusEffect } from "expo-router";
@@ -118,7 +118,14 @@ export default function ChallengesFeed() {
         </View>
 
         <View style={styles.infoRow}>
-          <Text style={styles.challengerText}>👤 Challenger: {item.creator_name}</Text>
+          <View style={styles.userDisplay}>
+            {item.creator_avatar ? (
+              <Image source={{ uri: item.creator_avatar }} style={styles.avatarSmall} />
+            ) : (
+              <Ionicons name="person-circle" size={24} color="#FF3366" />
+            )}
+            <Text style={styles.challengerText}>Challenger: {item.creator_name}</Text>
+          </View>
           {item.game_ids && item.game_ids.length > 0 && (
             <Text style={styles.gameIdText}>🆔 IDs: {item.game_ids.join(", ")}</Text>
           )}
@@ -238,6 +245,8 @@ const styles = StyleSheet.create({
   detailText: { color: "#AAA", fontSize: 14 },
   priceText: { color: "#4caf50", fontSize: 16, fontWeight: "bold" },
   infoRow: { marginBottom: 16, gap: 4 },
+  userDisplay: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
+  avatarSmall: { width: 24, height: 24, borderRadius: 12, backgroundColor: "#333" },
   challengerText: { color: "#FFF", fontSize: 14, fontWeight: "600" },
   gameIdText: { color: "#AAA", fontSize: 13 },
   actionsBox: { borderTopWidth: 1, borderTopColor: "#333", paddingTop: 16 },

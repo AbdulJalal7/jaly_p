@@ -14,7 +14,7 @@ export default function ChatScreen() {
   // The chat opponent shouldn't be hardcoded, but for 1v1 we need the "other" participant's ID
   // For simplicity, we can extract the receiverId dynamically from the first message if needed,
   // or pass targetUserId via search params. Let's assume passed via search params initially, or we figure it out.
-  const { targetUserId } = useLocalSearchParams(); 
+  const { targetUserId, targetUserName } = useLocalSearchParams(); 
 
   const handleSend = async () => {
     if (!inputText.trim() || !user?.$id) return;
@@ -59,7 +59,7 @@ export default function ChatScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
              <Text style={styles.backButtonText}>← Back</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Chat</Text>
+          <Text style={styles.headerTitle}>{targetUserName || "Chat"}</Text>
           <View style={styles.placeholder} />
         </View>
 
